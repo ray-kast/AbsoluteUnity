@@ -1,0 +1,60 @@
+use crate::ast::*;
+
+grammar(tag: &mut ParserTag);
+
+// Macros
+
+CommaList<T>: Vec<T> = {
+  <T> => vec![<>],
+  <l:(<T> ",")+> <r:T?> => match r {
+    None => l,
+    Some(r) => {
+      let mut l = l;
+      l.push(r);
+      l
+    }
+  },
+};
+
+CommaListOpt<T>: Vec<T> = { => Vec::new(), CommaList<T> };
+
+// Nonterminals
+
+pub Expr: Expr = {
+  <Statement> "." => Expr::Assert(<>),
+  <Statement> "?" => Expr::Query(<>),
+};
+
+pub Statement: Statement = <Clause> ":-" <Clause> => Statement::new(<>);
+
+pub Clause: Clause = AnyClause;
+
+AnyClause: Clause = {
+  <l:(<AllClause> ";")+> <r:AllClause> => { let mut l = l; l.push(r); Clause::Any(l) },
+  AllClause
+};
+
+AllClause: Clause = {
+  <l:(<UnaryClause> ",")+> <r:UnaryClause> => { let mut l = l; l.push(r); Clause::All(l) },
+  UnaryClause,
+};
+
+UnaryClause: Clause = {
+  "~" <UnaryClause> => Clause::Not(Box::new(<>)),
+  PrimClause,
+}
+
+PrimClause: Clause = {
+  App => Clause::App(<>),
+  "(" <Clause> ")",
+}
+
+pub App: App = <Atom> "(" <CommaListOpt<Value>> ")" => tag.make_app(<>);
+
+pub Value: Value = {
+  Var => Value::Var(<>),
+  Atom => Value::Atom(<>),
+};
+
+Var: Var = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => Var(<>.into());
+Atom: String = r"\p{Ll}[\p{L}\p{N}]*" => <>.into();

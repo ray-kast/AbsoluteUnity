@@ -1,0 +1,24 @@
+[package]
+name = "absolute_unity"
+version = "0.1.0"
+authors = ["rookie1024 <rookie1286@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+[lib]
+name = "aunify"
+path = "src/aunify/lib.rs"
+
+[[bin]]
+name = "au"
+path = "src/au/main.rs"
+
+[build-dependencies]
+lalrpop = "0.16.1"
+
+[dependencies]
+error-chain = "0.12.0"
+lalrpop-util = "0.16.1"
+lazy_static = "1.2.0"
+regex = "1.0.6"
+rustyline = "2.1.0"

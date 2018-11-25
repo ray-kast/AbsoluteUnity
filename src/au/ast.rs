@@ -1,9 +1,11 @@
-pub use aunify::{App, Clause, Pred, Statement, Value, Var};
-use std::{collections::HashMap, rc::Rc};
+pub use aunify::{
+  App, Clause, MaybeScheme, Pred, RcPred, Scheme, Statement, Value, Var,
+};
+use std::collections::HashMap;
 
 pub struct ParserTag {
   // Yeah, I'm aware this stores redundant values.
-  pred_src: HashMap<(String, usize), Rc<Pred>>,
+  pred_src: HashMap<(String, usize), RcPred>,
 }
 
 impl ParserTag {
@@ -25,6 +27,8 @@ impl ParserTag {
 
 #[derive(Debug)]
 pub enum Expr {
-  Assert(Statement),
-  Query(Statement),
+  Assert(MaybeScheme<Statement>),
+  Query(MaybeScheme<Statement>),
+  UnifyVal(MaybeScheme<Value>, MaybeScheme<Value>),
+  UnifyApp(MaybeScheme<App>, MaybeScheme<App>),
 }

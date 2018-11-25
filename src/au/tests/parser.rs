@@ -13,7 +13,7 @@ fn value() {
 
   assert_eq!(
     parser.parse(&mut tag, "X").unwrap(),
-    Value::Var(Var("X".into()))
+    Value::Var(Var::Formal("X".into()))
   );
 
   assert_eq!(
@@ -23,7 +23,13 @@ fn value() {
 
   assert_eq!(
     parser.parse(&mut tag, "MyVar1").unwrap(),
-    Value::Var(Var("MyVar1".into()))
+    Value::Var(Var::Formal("MyVar1".into()))
+  );
+
+  // Might add numerics eventually, but for now let's keep it strictly symbolic
+  assert_eq!(
+    parser.parse(&mut tag, "1337").unwrap(),
+    Value::Atom("1337".into())
   );
 }
 
@@ -36,7 +42,10 @@ fn app() {
     parser.parse(&mut tag, "eq(X, X)").unwrap(),
     App::new(
       Pred::new_rc("eq".into(), 2),
-      vec![Value::Var(Var("X".into())), Value::Var(Var("X".into()))]
+      vec![
+        Value::Var(Var::Formal("X".into())),
+        Value::Var(Var::Formal("X".into()))
+      ]
     )
   );
 
@@ -44,7 +53,10 @@ fn app() {
     parser.parse(&mut tag, "eq(X, X,)").unwrap(),
     App::new(
       Pred::new_rc("eq".into(), 2),
-      vec![Value::Var(Var("X".into())), Value::Var(Var("X".into()))]
+      vec![
+        Value::Var(Var::Formal("X".into())),
+        Value::Var(Var::Formal("X".into()))
+      ]
     )
   );
 
@@ -52,7 +64,10 @@ fn app() {
     parser.parse(&mut tag, "eq(X, atom)").unwrap(),
     App::new(
       Pred::new_rc("eq".into(), 2),
-      vec![Value::Var(Var("X".into())), Value::Atom("atom".into())]
+      vec![
+        Value::Var(Var::Formal("X".into())),
+        Value::Atom("atom".into())
+      ]
     )
   );
 
@@ -67,13 +82,12 @@ fn app() {
   // TODO: is there any point to allowing null-order predicates?
   assert_eq!(
     parser.parse(&mut tag, "boi()").unwrap(),
-    App::new(
-      Pred::new_rc("boi".into(), 0),
-      vec![]
-    )
+    App::new(Pred::new_rc("boi".into(), 0), vec![])
   );
 
   // TODO: did someone say higher-order predicates?
   //       (Note: this fails because predicate names must be valid atoms)
   assert!(parser.parse(&mut tag, "Cat(dog)").is_err());
 }
+
+// TODO: add tests for Clause, Statement, and Expr

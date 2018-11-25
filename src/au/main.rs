@@ -2,6 +2,7 @@
 extern crate lalrpop_util;
 
 mod ast;
+mod eval;
 mod read;
 
 lalrpop_mod!(pub parser);
@@ -10,27 +11,29 @@ lalrpop_mod!(pub parser);
 mod tests;
 
 use crate::{
-  ast::Expr as Ast,
+  eval::{EvalResult, Evaluator},
   read::{ReadResult, Reader},
 };
 use aunify;
 
-type Expr = Ast;
+fn print(res: EvalResult) {
+  use self::EvalResult::*;
 
-fn eval(ast: Ast) -> Expr { ast }
-
-fn print(expr: Expr) {
-  println!("{:?}", expr);
+  match res {
+    Unify(Ok(s)) => println!("unify result: {}", s),
+    Unify(Err(e)) => println!("unify failed: {}", e),
+  }
 }
 
 fn main() {
   use self::ReadResult::*;
 
   let mut reader = Reader::new(".au-history");
+  let mut evalr = Evaluator::new();
 
   loop {
     match reader.read() {
-      Eval(a) => print(eval(a)),
+      Eval(a) => print(evalr.eval(a)),
       Stop => break,
     }
   }

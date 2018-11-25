@@ -1,8 +1,7 @@
 mod app {
-  use crate::{App, Pred, Sub, Value, Var};
-  use std::rc::Rc;
+  use crate::{App, Pred, RcPred, Sub, Unify, Value, Var};
 
-  fn pred_eq() -> Rc<Pred> { Pred::new_rc("eq".into(), 2) }
+  fn pred_eq() -> RcPred { Pred::new_rc("eq".into(), 2) }
 
   #[test]
   fn unify() {
@@ -11,15 +10,21 @@ mod app {
     assert_eq!(
       App::new(
         pred_eq.clone(),
-        vec![Value::Var(Var("x".into())), Value::Var(Var("x".into()))]
+        vec![
+          Value::Var(Var::Formal("x".into())),
+          Value::Var(Var::Formal("x".into()))
+        ]
       )
       .unify(&App::new(
         pred_eq.clone(),
-        vec![Value::Var(Var("y".into())), Value::Var(Var("y".into()))]
+        vec![
+          Value::Var(Var::Formal("y".into())),
+          Value::Var(Var::Formal("y".into()))
+        ]
       ))
       .unwrap(),
       Sub::top()
-        .with(Var("x".into()), Value::Var(Var("y".into())))
+        .with(Var::Formal("x".into()), Value::Var(Var::Formal("y".into())))
         .unwrap()
     );
 
@@ -37,7 +42,10 @@ mod app {
 
     assert!(App::new(
       pred_eq.clone(),
-      vec![Value::Var(Var("x".into())), Value::Var(Var("x".into()))]
+      vec![
+        Value::Var(Var::Formal("x".into())),
+        Value::Var(Var::Formal("x".into()))
+      ]
     )
     .unify(&App::new(
       pred_eq.clone(),

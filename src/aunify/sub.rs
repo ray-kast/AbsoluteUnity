@@ -23,11 +23,7 @@ impl Sub {
         Vacant(v) => {
           v.insert(is.clone());
         },
-        Occupied(mut o) => {
-          // Temporarily insert a dummy value so I can consume the original
-          let val = o.insert(Value::Atom(String::new()));
-          o.insert(val.sub(sub));
-        },
+        Occupied(o) => o.into_mut().sub_self(sub),
       }
     }
 
@@ -35,4 +31,35 @@ impl Sub {
   }
 
   pub fn get(&self, var: &Var) -> Option<&Value> { self.0.get(var) }
+}
+
+impl Display for Sub {
+  fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    if self.0.is_empty() {
+      // An empty Sub implies top
+      fmt.write_str("⊤")?;
+    } else {
+      fmt.write_str("{")?;
+
+      let mut first = true;
+
+      for (var, is) in &self.0 {
+        if first {
+          first = false;
+        } else {
+          fmt.write_str(", ")?;
+        }
+
+        Display::fmt(var, fmt)?;
+
+        fmt.write_str(" ~ ")?;
+
+        Display::fmt(is, fmt)?;
+      }
+
+      fmt.write_str("}")?;
+    }
+
+    Ok(())
+  }
 }

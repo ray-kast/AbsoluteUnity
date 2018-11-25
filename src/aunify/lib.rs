@@ -4,10 +4,17 @@ extern crate error_chain; // TODO: this should be able to be removed, somehow
 mod clause;
 mod env;
 mod pred;
+mod scheme;
 mod statement;
 mod sub;
+mod thing;
 mod value;
 mod var;
+
+pub use self::{
+  clause::*, env::*, pred::*, scheme::*, statement::*, sub::*, thing::*,
+  value::*, var::*,
+};
 
 error_chain! {
   types { Error, ErrorKind, ResultExt, Result; }
@@ -15,31 +22,26 @@ error_chain! {
   foreign_links {}
 
   errors {
-    BadValueUnify(a: String, b: String) {
+    // TODO: add some kind of traceback?
+    BadValueUnify(a: Value, b: Value) {
       description("values couldn't be unified")
       display("values {} and {} couldn't be unified", a, b)
     }
 
-    BadAppUnify(a: String, b: String) {
-      description("applications couldn't be unified")
-      display("applications {} and {} couldn't be unified", a, b)
-    }
-
-    PredMismatch(a: String, b: String) {
+    PredMismatch(a: RcPred, b: RcPred) {
       description("predicate mismatch")
       display("predicates {} and {} don't match", a, b)
     }
   }
 }
 
-pub use self::{
-  clause::*, env::*, pred::*, statement::*, sub::*, value::*, var::*,
-};
-
 #[cfg(test)]
 mod tests;
 
 mod prelude {
   pub use super::*;
-  pub use std::collections::{hash_map::Entry as HashEntry, HashMap, HashSet};
+  pub use std::{
+    collections::{hash_map::Entry as HashEntry, HashMap, HashSet},
+    fmt::{self, Display},
+  };
 }

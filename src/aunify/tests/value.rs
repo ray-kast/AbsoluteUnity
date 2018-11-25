@@ -1,31 +1,49 @@
-use crate::{Sub, Value, Var};
+use crate::{Sub, Unify, Value, Var};
 
 #[test]
 fn unify() {
   assert_eq!(
-    Value::Var(Var("x".into())).unify(&Value::Var(Var("y".into()))).unwrap(),
-    Sub::top().with(Var("x".into()), Value::Var(Var("y".into()))).unwrap()
+    Value::Var(Var::Formal("x".into()))
+      .unify(&Value::Var(Var::Formal("y".into())))
+      .unwrap(),
+    Sub::top()
+      .with(Var::Formal("x".into()), Value::Var(Var::Formal("y".into())))
+      .unwrap()
   );
 
   assert_eq!(
-    Value::Var(Var("x".into())).unify(&Value::Atom("a".into())).unwrap(),
-    Sub::top().with(Var("x".into()), Value::Atom("a".into())).unwrap()
+    Value::Var(Var::Formal("x".into()))
+      .unify(&Value::Atom("a".into()))
+      .unwrap(),
+    Sub::top()
+      .with(Var::Formal("x".into()), Value::Atom("a".into()))
+      .unwrap()
   );
 
   assert_eq!(
-    Value::Atom("a".into()).unify(&Value::Var(Var("y".into()))).unwrap(),
-    Sub::top().with(Var("y".into()), Value::Atom("a".into())).unwrap()
+    Value::Atom("a".into())
+      .unify(&Value::Var(Var::Formal("y".into())))
+      .unwrap(),
+    Sub::top()
+      .with(Var::Formal("y".into()), Value::Atom("a".into()))
+      .unwrap()
   );
 
   assert_eq!(
-    Value::Var(Var("x".into())).unify(&Value::Var(Var("x".into()))).unwrap(),
+    Value::Var(Var::Formal("x".into()))
+      .unify(&Value::Var(Var::Formal("x".into())))
+      .unwrap(),
     Sub::top()
   );
 
   assert_eq!(
-    Value::Atom("a".into()).unify(&Value::Atom("a".into())).unwrap(),
+    Value::Atom("a".into())
+      .unify(&Value::Atom("a".into()))
+      .unwrap(),
     Sub::top()
   );
 
-  assert!(Value::Atom("a".into()).unify(&Value::Atom("b".into())).is_err());
+  assert!(Value::Atom("a".into())
+    .unify(&Value::Atom("b".into()))
+    .is_err());
 }

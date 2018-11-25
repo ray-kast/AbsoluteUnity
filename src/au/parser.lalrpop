@@ -18,14 +18,24 @@ CommaList<T>: Vec<T> = {
 
 CommaListOpt<T>: Vec<T> = { => Vec::new(), CommaList<T> };
 
+MaybeScheme<T>: MaybeScheme<T> = {
+  "forall" <on:CommaList<Var>> "." <t:T> => MaybeScheme::Scheme(Scheme::generalize(t, on)),
+  T => MaybeScheme::Inst(<>),
+};
+
 // Nonterminals
 
 pub Expr: Expr = {
-  <Statement> "." => Expr::Assert(<>),
-  <Statement> "?" => Expr::Query(<>),
+  <MaybeScheme<Statement>> "." => Expr::Assert(<>),
+  <MaybeScheme<Statement>> "?" => Expr::Query(<>),
+  <MaybeScheme<Value>> "<>" <MaybeScheme<Value>> => Expr::UnifyVal(<>),
+  <MaybeScheme<App>> "<>" <MaybeScheme<App>> => Expr::UnifyApp(<>),
 };
 
-pub Statement: Statement = <Clause> ":-" <Clause> => Statement::new(<>);
+pub Statement: Statement = {
+  <Clause> r":-|⊢" <Clause> => Statement::new(<>),
+  <Clause> => Statement::assert(<>),
+};
 
 pub Clause: Clause = AnyClause;
 
@@ -40,12 +50,14 @@ AllClause: Clause = {
 };
 
 UnaryClause: Clause = {
-  "~" <UnaryClause> => Clause::Not(Box::new(<>)),
+  r"~|¬" <UnaryClause> => Clause::Not(Box::new(<>)),
   PrimClause,
 }
 
 PrimClause: Clause = {
   App => Clause::App(<>),
+  r":top|⊤" => Clause::top(),
+  r":bot|⊥" => Clause::bot(),
   "(" <Clause> ")",
 }
 
@@ -56,5 +68,5 @@ pub Value: Value = {
   Atom => Value::Atom(<>),
 };
 
-Var: Var = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => Var(<>.into());
-Atom: String = r"\p{Ll}[\p{L}\p{N}]*" => <>.into();
+Var: Var = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => Var::Formal(<>.into());
+Atom: String = r"[\p{Ll}\p{N}][\p{L}\p{N}]*" => <>.into();

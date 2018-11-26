@@ -10,12 +10,12 @@ impl Display for Var {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     match self {
       Var::Formal(n) => {
-        fmt.write_str("$");
-        Display::fmt(n, fmt);
+        fmt.write_str("$")?;
+        Display::fmt(n, fmt)?;
       },
       Var::Auto(i) => {
-        fmt.write_str("_");
-        Display::fmt(i, fmt);
+        fmt.write_str("_")?;
+        Display::fmt(i, fmt)?;
       },
     }
 

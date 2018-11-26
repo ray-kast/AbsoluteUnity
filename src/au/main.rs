@@ -20,8 +20,26 @@ fn print(res: EvalResult) {
   use self::EvalResult::*;
 
   match res {
-    Unify(Ok(s)) => println!("unify result: {}", s),
-    Unify(Err(e)) => println!("unify failed: {}", e),
+    Unit => {},
+    Query(i) => {
+      for sol in i {
+        println!("{};", sol); // TODO: lazy-evaluate this
+      }
+
+      println!("⊥.");
+    },
+    UnifyVal(Ok((a, b, sub, a2, b2))) => {
+      println!("unify result: {}", sub);
+      println!("    lhs: {} ~ {}", a, a2);
+      println!("    rhs: {} ~ {}", b, b2);
+    },
+    UnifyVal(Err(e)) => println!("unify failed: {}", e),
+    UnifyApp(Ok((a, b, sub, a2, b2))) => {
+      println!("unify result: {}", sub);
+      println!("    lhs: {} ~ {}", a, a2);
+      println!("    rhs: {} ~ {}", b, b2);
+    },
+    UnifyApp(Err(e)) => println!("unify failed: {}", e),
   }
 }
 

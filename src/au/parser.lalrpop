@@ -27,14 +27,14 @@ MaybeScheme<T>: MaybeScheme<T> = {
 
 pub Expr: Expr = {
   <MaybeScheme<Statement>> "." => Expr::Assert(<>),
-  <MaybeScheme<Statement>> "?" => Expr::Query(<>),
+  <Clause> "?" => Expr::Query(<>),
   <MaybeScheme<Value>> "<>" <MaybeScheme<Value>> => Expr::UnifyVal(<>),
   <MaybeScheme<App>> "<>" <MaybeScheme<App>> => Expr::UnifyApp(<>),
 };
 
 pub Statement: Statement = {
-  <Clause> r":-|⊢" <Clause> => Statement::new(<>),
-  <Clause> => Statement::assert(<>),
+  <App> r":-|⊢" <Clause> => Statement::new(<>),
+  <App> => Statement::fact(<>),
 };
 
 pub Clause: Clause = AnyClause;

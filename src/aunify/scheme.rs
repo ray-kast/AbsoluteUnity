@@ -1,5 +1,5 @@
 use super::prelude::*;
-use std::mem;
+use std::{borrow::Cow, mem};
 
 #[derive(Clone, Debug)]
 pub struct Scheme<T>(Vec<Var>, T);
@@ -11,7 +11,7 @@ pub enum MaybeScheme<T> {
 }
 
 impl<T> Scheme<T> {
-  pub fn generalize(t: T, on: Vec<Var>) -> Scheme<T> { Scheme(on, t) }
+  pub fn generalize(t: T, on: Vec<Var>) -> Self { Scheme(on, t) }
 }
 
 impl<T: Thing> Scheme<T> {
@@ -27,7 +27,45 @@ impl<T: Thing> Scheme<T> {
   }
 }
 
+impl<T: Thing + Clone> Scheme<T> {
+  pub fn make_inst(&self, src: &mut VarSource) -> Result<T> {
+    let mut sub = Sub::top();
+
+    for var in &self.0 {
+      // Is directly returning this error the right thing to do?
+      sub = sub.with(var.clone(), Value::Var(src.acquire()))?;
+    }
+
+    Ok(self.1.clone().sub(&sub))
+  }
+}
+
+impl<T: Display> Display for Scheme<T> {
+  fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fmt.write_str("forall ")?;
+
+    let mut first = true;
+
+    for var in &self.0 {
+      if first {
+        first = false;
+      } else {
+        fmt.write_str(", ")?;
+      }
+
+      Display::fmt(var, fmt)?;
+    }
+
+    fmt.write_str(".")?;
+
+    Display::fmt(&self.1, fmt)?;
+
+    Ok(())
+  }
+}
+
 impl<T: Thing> MaybeScheme<T> {
+  // TODO: return self if instantiation fails?
   pub fn to_inst(&mut self, src: &mut VarSource) -> Result<&T> {
     use self::MaybeScheme::*;
 
@@ -61,6 +99,17 @@ impl<T: Thing> MaybeScheme<T> {
   }
 }
 
+impl<T: Thing + Clone> MaybeScheme<T> {
+  pub fn as_inst(&self, src: &mut VarSource) -> Result<Cow<T>> {
+    use self::MaybeScheme::*;
+
+    Ok(match self {
+      Scheme(s) => Cow::Owned(s.make_inst(src)?),
+      Inst(i) => Cow::Borrowed(&i),
+    })
+  }
+}
+
 impl<T: Thing + Unify> MaybeScheme<T> {
   pub fn unify_inst(
     &mut self,
@@ -71,5 +120,28 @@ impl<T: Thing + Unify> MaybeScheme<T> {
     let b = rhs.to_inst(src)?;
 
     a.unify(b)
+  }
+
+  pub fn inst_and_unify(
+    self,
+    rhs: Self,
+    src: &mut VarSource,
+  ) -> Result<(T, T, Sub)> {
+    self.into_inst(src).and_then(|a| {
+      rhs
+        .into_inst(src)
+        .and_then(|b| a.unify(&b).map(|sub| (a, b, sub)))
+    })
+  }
+}
+
+impl<T: Display> Display for MaybeScheme<T> {
+  fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      MaybeScheme::Scheme(s) => Display::fmt(s, fmt)?,
+      MaybeScheme::Inst(i) => Display::fmt(i, fmt)?,
+    }
+
+    Ok(())
   }
 }

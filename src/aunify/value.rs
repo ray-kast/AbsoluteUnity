@@ -1,6 +1,6 @@
 use super::prelude::*;
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Value {
   Var(Var),
   Atom(String), // TODO: add some kind of configurable domain of discourse

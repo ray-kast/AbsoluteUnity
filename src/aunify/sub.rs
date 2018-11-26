@@ -1,6 +1,6 @@
 use super::prelude::*;
 
-#[derive(PartialEq, Debug)] // TODO: can this safely derive Eq?
+#[derive(Clone, PartialEq, Debug)] // TODO: can this safely derive Eq?
 pub struct Sub(HashMap<Var, Value>);
 
 impl Sub {
@@ -15,8 +15,30 @@ impl Sub {
     Ok(self)
   }
 
-  pub fn sub(mut self, sub: &Sub) -> Self {
+  pub fn merge(mut self, rhs: Self) -> Result<Self> {
+    for (var, is) in rhs.0 {
+      self = self.with(var, is)?;
+    }
+
+    Ok(self)
+  }
+
+  pub fn into_map(self) -> HashMap<Var, Value> { self.0 }
+
+  pub fn get(&self, var: &Var) -> Option<&Value> { self.0.get(var) }
+
+  pub fn is_top(&self) -> bool { self.0.is_empty() }
+}
+
+impl Thing for Sub {
+  fn sub(mut self, sub: &Sub) -> Self {
     use self::HashEntry::*;
+
+    for (var, is) in &mut self.0 {
+      if !sub.0.contains_key(var) {
+        is.sub_self(sub);
+      }
+    }
 
     for (var, is) in &sub.0 {
       match self.0.entry(var.clone()) {
@@ -29,8 +51,6 @@ impl Sub {
 
     self
   }
-
-  pub fn get(&self, var: &Var) -> Option<&Value> { self.0.get(var) }
 }
 
 impl Display for Sub {

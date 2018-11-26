@@ -23,7 +23,7 @@ impl Display for Pred {
   }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct App(RcPred, Vec<Value>);
 
 impl App {
@@ -67,5 +67,29 @@ impl Unify for App {
     }
 
     ret
+  }
+}
+
+impl Display for App {
+  fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    Display::fmt(&self.0 .0, fmt)?;
+
+    fmt.write_str("(")?;
+
+    let mut first = true;
+
+    for val in &self.1 {
+      if first {
+        first = false;
+      } else {
+        fmt.write_str(", ")?;
+      }
+
+      Display::fmt(val, fmt)?;
+    }
+
+    fmt.write_str(")")?;
+
+    Ok(())
   }
 }

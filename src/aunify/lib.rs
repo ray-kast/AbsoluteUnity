@@ -1,19 +1,29 @@
+#![feature(generators, generator_trait)]
+
 #[macro_use]
 extern crate error_chain; // TODO: this should be able to be removed, somehow
 
-mod clause;
-mod env;
-mod pred;
-mod scheme;
-mod statement;
-mod sub;
-mod thing;
-mod value;
-mod var;
+pub mod clause;
+pub mod env;
+pub mod gen_iter;
+pub mod pred;
+pub mod scheme;
+pub mod statement;
+pub mod sub;
+pub mod thing;
+pub mod value;
+pub mod var;
 
 pub use self::{
-  clause::*, env::*, pred::*, scheme::*, statement::*, sub::*, thing::*,
-  value::*, var::*,
+  clause::Clause,
+  env::Env,
+  pred::{App, Pred, RcPred},
+  scheme::{MaybeScheme, Scheme},
+  statement::Statement,
+  sub::Sub,
+  thing::{Thing, Unify},
+  value::Value,
+  var::{Var, VarSource},
 };
 
 error_chain! {

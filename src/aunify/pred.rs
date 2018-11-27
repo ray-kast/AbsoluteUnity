@@ -23,7 +23,7 @@ impl Display for Pred {
   }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct App(RcPred, Vec<Value>);
 
 impl App {
@@ -34,6 +34,8 @@ impl App {
 
     App(pred, args)
   }
+
+  pub fn into_parts(self) -> (RcPred, Vec<Value>) { (self.0, self.1) }
 }
 
 impl Thing for App {

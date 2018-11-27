@@ -26,7 +26,7 @@ MaybeScheme<T>: MaybeScheme<T> = {
 // Nonterminals
 
 pub Expr: Expr = {
-  <MaybeScheme<Statement>> "." => Expr::Assert(<>),
+  (<MaybeScheme<Statement>> ".")+ => Expr::Assert(<>),
   <Clause> "?" => Expr::Query(<>),
   <MaybeScheme<Value>> "<>" <MaybeScheme<Value>> => Expr::UnifyVal(<>),
   <MaybeScheme<App>> "<>" <MaybeScheme<App>> => Expr::UnifyApp(<>),
@@ -37,15 +37,15 @@ pub Statement: Statement = {
   <App> => Statement::fact(<>),
 };
 
-pub Clause: Clause = AnyClause;
+pub Clause: Clause = OrClause;
 
-AnyClause: Clause = {
-  <l:(<AllClause> ";")+> <r:AllClause> => { let mut l = l; l.push(r); Clause::Any(l) },
-  AllClause
+OrClause: Clause = {
+  <l:OrClause> ";" <r:AndClause> => Clause::Or(Box::new(l), Box::new(r)),
+  AndClause
 };
 
-AllClause: Clause = {
-  <l:(<UnaryClause> ",")+> <r:UnaryClause> => { let mut l = l; l.push(r); Clause::All(l) },
+AndClause: Clause = {
+  <l:AndClause> "," <r:UnaryClause> => Clause::And(Box::new(l), Box::new(r)),
   UnaryClause,
 };
 
@@ -56,8 +56,8 @@ UnaryClause: Clause = {
 
 PrimClause: Clause = {
   App => Clause::App(<>),
-  r":top|⊤" => Clause::top(),
-  r":bot|⊥" => Clause::bot(),
+  r":top|⊤" => Clause::Top,
+  r":bot|⊥" => Clause::Bot,
   "(" <Clause> ")",
 }
 

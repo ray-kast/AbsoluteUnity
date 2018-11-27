@@ -27,7 +27,7 @@ impl ParserTag {
 
 #[derive(Debug)]
 pub enum Expr {
-  Assert(MaybeScheme<Statement>),
+  Assert(Vec<MaybeScheme<Statement>>),
   Query(Clause),
   UnifyVal(MaybeScheme<Value>, MaybeScheme<Value>),
   UnifyApp(MaybeScheme<App>, MaybeScheme<App>),

@@ -23,8 +23,11 @@ impl Evaluator {
 
   pub fn eval<'a>(&'a mut self, ast: Expr) -> EvalResult {
     match ast {
-      Expr::Assert(s) => {
-        self.env.state(s);
+      Expr::Assert(v) => {
+        for stmt in v {
+          self.env.state(stmt);
+        }
+        
         EvalResult::Unit
       },
       Expr::Query(c) => {

@@ -2,29 +2,25 @@ use super::prelude::*;
 
 #[derive(Clone, Debug)]
 pub enum Clause {
+  Top,
+  Bot,
   App(App),
   Not(Box<Clause>),
-  Any(Vec<Clause>),
-  All(Vec<Clause>),
+  And(Box<Clause>, Box<Clause>),
+  Or(Box<Clause>, Box<Clause>),
 }
 
 impl Clause {
-  // Gonna reuse Any and All for top and bottom for simplicity's sake
-
-  #[inline]
-  pub fn top() -> Self { Clause::All(Vec::new()) }
-
-  #[inline]
-  pub fn bot() -> Self { Clause::Any(Vec::new()) }
-
   fn disp_prec(&self, prec: u32, fmt: &mut fmt::Formatter) -> fmt::Result {
     use self::Clause::*;
 
     let my_prec = match self {
+      Top => 3,
+      Bot => 3,
       App(_) => 3,
       Not(_) => 2,
-      Any(_) => 0,
-      All(_) => 1,
+      And(_, _) => 1,
+      Or(_, _) => 0,
     };
 
     if my_prec < prec {
@@ -32,44 +28,22 @@ impl Clause {
     }
 
     match self {
+      Top => fmt.write_str("")?,
+      Bot => fmt.write_str("")?,
       App(a) => Display::fmt(a, fmt)?,
       Not(c) => {
         fmt.write_str("~")?;
         c.disp_prec(my_prec, fmt)?;
       },
-      Any(v) => {
-        if v.is_empty() {
-          fmt.write_str("⊥")?;
-        } else {
-          let mut first = true;
-
-          for clause in v {
-            if first {
-              first = false;
-            } else {
-              fmt.write_str("; ")?;
-            }
-
-            clause.disp_prec(my_prec, fmt)?;
-          }
-        }
+      And(a, b) => {
+        a.disp_prec(my_prec, fmt)?;
+        fmt.write_str(", ")?;
+        b.disp_prec(my_prec, fmt)?;
       },
-      All(v) => {
-        if v.is_empty() {
-          fmt.write_str("⊤")?;
-        } else {
-          let mut first = true;
-
-          for clause in v {
-            if first {
-              first = false;
-            } else {
-              fmt.write_str(", ")?;
-            }
-
-            clause.disp_prec(my_prec, fmt)?;
-          }
-        }
+      Or(a, b) => {
+        a.disp_prec(my_prec, fmt)?;
+        fmt.write_str(", ")?;
+        b.disp_prec(my_prec, fmt)?;
       },
     }
 
@@ -83,15 +57,15 @@ impl Clause {
 
 impl Thing for Clause {
   fn sub(self, sub: &Sub) -> Self {
+    use self::Clause::*;
+
     match self {
-      Clause::App(a) => Clause::App(a.sub(sub)),
-      Clause::Not(c) => Clause::Not(Box::new(c.sub(sub))),
-      Clause::Any(v) => {
-        Clause::Any(v.into_iter().map(|c| c.sub(sub)).collect())
-      },
-      Clause::All(v) => {
-        Clause::All(v.into_iter().map(|c| c.sub(sub)).collect())
-      },
+      Top => Top,
+      Bot => Bot,
+      App(a) => App(a.sub(sub)),
+      Not(c) => Not(Box::new(c.sub(sub))),
+      And(a, b) => And(Box::new(a.sub(sub)), Box::new(b.sub(sub))),
+      Or(a, b) => Or(Box::new(a.sub(sub)), Box::new(b.sub(sub))),
     }
   }
 }

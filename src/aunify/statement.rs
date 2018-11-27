@@ -14,7 +14,7 @@ impl Statement {
   pub fn rhs(&self) -> &Clause { &self.1 }
 
   #[inline]
-  pub fn fact(given: App) -> Self { Statement(given, Clause::top()) }
+  pub fn fact(given: App) -> Self { Statement(given, Clause::Top) }
 }
 
 impl Thing for Statement {

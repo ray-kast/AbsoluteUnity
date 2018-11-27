@@ -52,27 +52,27 @@ mod app {
       vec![Value::Atom("a".into()), Value::Atom("b".into())]
     ))
     .is_err());
-  }
 
-  #[test]
-  fn unify_bad() {
-    let pred_eq = pred_eq();
-
-    // This fails because x is on both sides
-    assert!(App::new(
-      pred_eq.clone(),
-      vec![
-        Value::Var(Var::Formal("x".into())),
-        Value::Var(Var::Formal("x".into()))
-      ]
-    )
-    .unify(&App::new(
-      pred_eq.clone(),
-      vec![
-        Value::Var(Var::Formal("x".into())),
-        Value::Var(Var::Formal("y".into()))
-      ]
-    ))
-    .is_err());
+    // While this is technically incorrect, it is a solvable binding.
+    assert_eq!(
+      App::new(
+        pred_eq.clone(),
+        vec![
+          Value::Var(Var::Formal("x".into())),
+          Value::Var(Var::Formal("x".into()))
+        ]
+      )
+      .unify(&App::new(
+        pred_eq.clone(),
+        vec![
+          Value::Var(Var::Formal("x".into())),
+          Value::Var(Var::Formal("y".into()))
+        ]
+      ))
+      .unwrap(),
+      Sub::top()
+        .with(Var::Formal("x".into()), Value::Var(Var::Formal("y".into())))
+        .unwrap()
+    );
   }
 }

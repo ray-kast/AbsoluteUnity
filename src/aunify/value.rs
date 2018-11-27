@@ -4,6 +4,7 @@ use super::prelude::*;
 pub enum Value {
   Var(Var),
   Atom(String), // TODO: add some kind of configurable domain of discourse
+  Tuple(Vec<Value>),
 }
 
 impl Thing for Value {
@@ -13,6 +14,11 @@ impl Thing for Value {
         set.insert(v.clone());
       },
       Value::Atom(_) => {},
+      Value::Tuple(v) => {
+        for val in v {
+          val.collect_free_vars(set);
+        }
+      },
     }
   }
 
@@ -26,16 +32,41 @@ impl Thing for Value {
   }
 }
 
-// NOTE: this does not implement UnifyCore because var-var bindings are okay here
 impl Unify for Value {
   fn unify(&self, rhs: &Value) -> Result<Sub> {
     use self::Value::*;
 
     match (self, rhs) {
-      (Var(a), Var(b)) if a == b => Ok(Sub::top()),
-      (Var(a), b) => Sub::top().with(a.clone(), b.clone()),
-      (a, Var(b)) => Sub::top().with(b.clone(), a.clone()),
+      (Var(a), Var(b)) => if a == b {
+        Ok(Sub::top())
+      } else {
+        Sub::top().with(a.clone(), Var(b.clone()))
+      },
+      (Var(a), b) => {
+        if b.free_vars().contains(a) {
+          Err(ErrorKind::VarBothSides(a.clone()).into())
+        } else {
+          Sub::top().with(a.clone(), b.clone())
+        }
+      },
+      (a, Var(b)) => {
+        if a.free_vars().contains(b) {
+          Err(ErrorKind::VarBothSides(b.clone()).into())
+        } else {
+          Sub::top().with(b.clone(), a.clone())
+        }
+      },
       (Atom(a), Atom(b)) if a == b => Ok(Sub::top()),
+      (Tuple(a), Tuple(b)) if a.len() == b.len() => {
+        let mut ret = Sub::top();
+
+        for (l, r) in a.iter().zip(b.iter()) {
+          let sub = &l.clone().sub(&ret).unify(r)?;
+          ret = ret.sub(sub);
+        }
+
+        Ok(ret)
+      },
       _ => Err(ErrorKind::BadValueUnify(self.clone(), rhs.clone()).into()),
     }
   }
@@ -49,6 +80,23 @@ impl Display for Value {
         fmt.write_str("｢")?;
         Display::fmt(a, fmt)?;
         fmt.write_str("｣")?;
+      },
+      Value::Tuple(v) => {
+        fmt.write_str("(")?;
+
+        let mut first = true;
+
+        for val in v {
+          if first {
+            first = false;
+          } else {
+            fmt.write_str(", ")?;
+          }
+
+          Display::fmt(val, fmt)?;
+        }
+
+        fmt.write_str(")")?;
       },
     }
 

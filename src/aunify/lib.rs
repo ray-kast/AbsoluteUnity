@@ -43,9 +43,9 @@ error_chain! {
       display("predicates {} and {} don't match", a, b)
     }
 
-    UnsolvableUnify(msg: &'static str) {
-      description("unsolvable unify")
-      display("unsolvable unify: {}", msg)
+    VarBothSides(var: Var) {
+      description("variable on both sides of unify")
+      display("unsolvable unify: {} is on both sides", var)
     }
   }
 }
@@ -54,7 +54,7 @@ error_chain! {
 mod tests;
 
 mod prelude {
-  pub use super::{thing::UnifyCore, *};
+  pub use super::*;
   pub use std::{
     collections::{hash_map::Entry as HashEntry, HashMap, HashSet},
     fmt::{self, Display},

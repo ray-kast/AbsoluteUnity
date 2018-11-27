@@ -56,25 +56,22 @@ impl Thing for App {
   }
 }
 
-impl UnifyCore for App {
-  fn unify_core(&self, rhs: &App) -> Result<Sub> {
+impl Unify for App {
+  fn unify(&self, rhs: &App) -> Result<Sub> {
     if self.0 != rhs.0 {
       return Err(ErrorKind::PredMismatch(self.0.clone(), rhs.0.clone()).into());
     }
 
     assert!(self.1.len() == rhs.1.len());
 
-    let mut ret = Ok(Sub::top());
+    let mut ret = Sub::top();
 
     for (a, b) in self.1.iter().zip(rhs.1.iter()) {
-      if let Ok(sub) = ret {
-        ret = a.clone().sub(&sub).unify(b).map(|s| sub.sub(&s));
-      } else {
-        break;
-      }
+      let sub = &a.clone().sub(&ret).unify(b)?;
+      ret = ret.sub(sub);
     }
 
-    ret
+    Ok(ret)
   }
 }
 

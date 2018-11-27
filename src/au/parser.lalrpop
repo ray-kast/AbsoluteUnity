@@ -22,13 +22,20 @@ MaybeScheme<T>: MaybeScheme<T> = {
   <t:T> => MaybeScheme::generalize(t),
 };
 
+ExplicitMaybeScheme<T>: MaybeScheme<T> = {
+  // TODO: this just ignores duplicate names
+  "[" <on:CommaList<Var>> "]" <t:T> => MaybeScheme::Scheme(Scheme::generalize(t, on.into_iter().collect())),
+  "[" "]" <t:T> => MaybeScheme::generalize(t),
+  T => MaybeScheme::Inst(<>),
+};
+
 // Nonterminals
 
 pub Expr: Expr = {
   (<MaybeScheme<Statement>> ".")+ => Expr::Assert(<>),
   <Clause> "?" => Expr::Query(<>),
-  <MaybeScheme<Value>> "<>" <MaybeScheme<Value>> => Expr::UnifyVal(<>),
-  <MaybeScheme<App>> "<>" <MaybeScheme<App>> => Expr::UnifyApp(<>),
+  <ExplicitMaybeScheme<Value>> "<>" <ExplicitMaybeScheme<Value>> => Expr::UnifyVal(<>),
+  <ExplicitMaybeScheme<App>> "<>" <ExplicitMaybeScheme<App>> => Expr::UnifyApp(<>),
 };
 
 pub Statement: Statement = {
@@ -65,6 +72,7 @@ pub App: App = <Atom> "(" <CommaListOpt<Value>> ")" => tag.make_app(<>);
 pub Value: Value = {
   Var => Value::Var(<>),
   Atom => Value::Atom(<>),
+  "(" <CommaList<Value>> ")" => Value::Tuple(<>),
 };
 
 Var: Var = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => Var::Formal(<>.into());

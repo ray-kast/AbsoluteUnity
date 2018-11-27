@@ -11,6 +11,20 @@ enum CkVal {
   AutoVar,
   FormalVar(String),
   Atom(String),
+  Tuple(Vec<CkVal>),
+}
+
+impl From<Value> for CkVal {
+  fn from(v: Value) -> Self {
+    match v {
+      Value::Var(Var::Auto(_)) => CkVal::AutoVar,
+      Value::Var(Var::Formal(v)) => CkVal::FormalVar(v),
+      Value::Atom(a) => CkVal::Atom(a),
+      Value::Tuple(v) => {
+        CkVal::Tuple(v.into_iter().map(|v| v.into()).collect())
+      },
+    }
+  }
 }
 
 impl Env {
@@ -31,17 +45,7 @@ impl Env {
       let key = {
         let (pred, vals) = app.clone().into_parts();
 
-        CacheKey(
-          pred,
-          vals
-            .into_iter()
-            .map(|v| match v {
-              Value::Var(Var::Auto(_)) => CkVal::AutoVar,
-              Value::Var(Var::Formal(v)) => CkVal::FormalVar(v),
-              Value::Atom(a) => CkVal::Atom(a),
-            })
-            .collect(),
-        )
+        CacheKey(pred, vals.into_iter().map(|v| v.into()).collect())
       };
 
       if !trace.borrow_mut().insert(key.clone()) {
@@ -102,16 +106,12 @@ impl Env {
       },
       Clause::Not(c) => unimplemented!(),
       Clause::And(a, b) => {
-        // println!("evaluating lhs of ({}), ({})", a, b);
-
         // TODO: should we really collect this?
         //       (NB: currently doing it to avoid double-mut-borrowing src)
         for sub in self
           .solve_clause_impl(*a, src, trace.clone())
           .collect::<Vec<_>>()
         {
-          // println!("evaluating rhs {} under {}", b, sub);
-
           // TODO: this is gonna result in a lot of cloning...
           for sub2 in Box::new(self.solve_clause_impl(
             b.clone().sub(&sub),
@@ -122,7 +122,15 @@ impl Env {
           }
         }
       },
-      Clause::Or(a, b) => unimplemented!(),
+      Clause::Or(a, b) => {
+        for sol in Box::new(self.solve_clause_impl(*a, src, trace.clone())) {
+          yield sol;
+        }
+
+        for sol in Box::new(self.solve_clause_impl(*b, src, trace.clone())) {
+          yield sol;
+        }
+      },
     })
   }
 

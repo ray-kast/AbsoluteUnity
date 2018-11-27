@@ -44,6 +44,8 @@ fn print(res: EvalResult) {
       println!("    rhs: {} ~ {}", b, b2);
     },
     UnifyApp(Err(e)) => println!("unify failed: {}", e),
+    PrintVal(v) => println!("{}", v),
+    PrintStmt(s) => println!("{}", s),
   }
 }
 

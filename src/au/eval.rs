@@ -11,6 +11,8 @@ pub enum EvalResult<'a> {
   Query(Box<Iterator<Item = Sub> + 'a>),
   UnifyVal(aunify::Result<(Value, Value, Sub, Value, Value)>),
   UnifyApp(aunify::Result<(App, App, Sub, App, App)>),
+  PrintVal(MaybeScheme<Value>),
+  PrintStmt(MaybeScheme<Statement>),
 }
 
 impl Evaluator {
@@ -53,6 +55,8 @@ impl Evaluator {
           (a1, b1, sub, a2, b2)
         }),
       ),
+      Expr::PrintVal(v) => EvalResult::PrintVal(v),
+      Expr::PrintStmt(s) => EvalResult::PrintStmt(s),
     }
   }
 }

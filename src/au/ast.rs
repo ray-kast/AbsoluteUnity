@@ -31,4 +31,6 @@ pub enum Expr {
   Query(Clause),
   UnifyVal(MaybeScheme<Value>, MaybeScheme<Value>),
   UnifyApp(MaybeScheme<App>, MaybeScheme<App>),
+  PrintVal(MaybeScheme<Value>),
+  PrintStmt(MaybeScheme<Statement>),
 }

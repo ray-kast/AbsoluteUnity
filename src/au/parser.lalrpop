@@ -36,6 +36,8 @@ pub Expr: Expr = {
   <Clause> "?" => Expr::Query(<>),
   <ExplicitMaybeScheme<Value>> "<>" <ExplicitMaybeScheme<Value>> => Expr::UnifyVal(<>),
   <ExplicitMaybeScheme<App>> "<>" <ExplicitMaybeScheme<App>> => Expr::UnifyApp(<>),
+  "#" <ExplicitMaybeScheme<Value>> => Expr::PrintVal(<>),
+  "#" <ExplicitMaybeScheme<Statement>> => Expr::PrintStmt(<>),
 };
 
 pub Statement: Statement = {

@@ -25,9 +25,10 @@ impl Thing for Value {
   fn sub(self, sub: &Sub) -> Self {
     use self::Value::*;
 
-    match &self {
-      Var(v) => sub.get(&v).map_or(self, |l| l.clone()),
-      _ => self.clone(),
+    match self {
+      Var(v) => sub.get(&v).map_or(Var(v), |l| l.clone()),
+      Atom(a) => Atom(a),
+      Tuple(v) => Tuple(v.into_iter().map(|l| l.sub(sub)).collect())
     }
   }
 }

@@ -7,6 +7,15 @@ pub enum Value {
 }
 
 impl Thing for Value {
+  fn collect_free_vars(&self, set: &mut HashSet<Var>) {
+    match self {
+      Value::Var(v) => {
+        set.insert(v.clone());
+      },
+      Value::Atom(_) => {},
+    }
+  }
+
   fn sub(self, sub: &Sub) -> Self {
     use self::Value::*;
 

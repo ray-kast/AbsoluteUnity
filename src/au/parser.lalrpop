@@ -19,7 +19,9 @@ CommaList<T>: Vec<T> = {
 CommaListOpt<T>: Vec<T> = { => Vec::new(), CommaList<T> };
 
 MaybeScheme<T>: MaybeScheme<T> = {
-  "forall" <on:CommaList<Var>> "." <t:T> => MaybeScheme::Scheme(Scheme::generalize(t, on)),
+  // TODO: this just ignores duplicate names
+  "(" <on:CommaList<Var>> ")" <t:T> => MaybeScheme::Scheme(Scheme::generalize(t, on.into_iter().collect())),
+  "(" "*" ")" <t:T> => MaybeScheme::generalize(t),
   T => MaybeScheme::Inst(<>),
 };
 

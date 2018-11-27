@@ -65,7 +65,7 @@ impl Env {
               trace.clone(),
             )) {
               if let Ok(merged) = sub2.merge(sub.clone()) {
-                yield merged;
+                yield merged.relevant_to(&app);
               }
             }
           },

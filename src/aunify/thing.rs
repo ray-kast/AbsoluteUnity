@@ -3,7 +3,15 @@ use std::mem;
 
 // TODO: this is an awful name and you know it
 pub trait Thing {
-  fn free_vars(&self) -> HashSet<Var> { unimplemented!() } // TODO
+  fn collect_free_vars(&self, set: &mut HashSet<Var>);
+
+  fn free_vars(&self) -> HashSet<Var> {
+    let mut ret = HashSet::new();
+
+    self.collect_free_vars(&mut ret);
+
+    ret
+  }
 
   fn sub(self, sub: &Sub) -> Self;
 

@@ -2,7 +2,7 @@ use super::prelude::*;
 use std::{borrow::Cow, mem};
 
 #[derive(Clone, Debug)]
-pub struct Scheme<T>(Vec<Var>, T);
+pub struct Scheme<T>(HashSet<Var>, T);
 
 #[derive(Clone, Debug)]
 pub enum MaybeScheme<T> {
@@ -11,7 +11,7 @@ pub enum MaybeScheme<T> {
 }
 
 impl<T> Scheme<T> {
-  pub fn generalize(t: T, on: Vec<Var>) -> Self { Scheme(on, t) }
+  pub fn generalize(t: T, on: HashSet<Var>) -> Self { Scheme(on, t) }
 }
 
 impl<T: Thing> Scheme<T> {
@@ -65,6 +65,16 @@ impl<T: Display> Display for Scheme<T> {
 }
 
 impl<T: Thing> MaybeScheme<T> {
+  pub fn generalize(inst: T) -> Self {
+    let vars = inst.free_vars();
+
+    if vars.is_empty() {
+      MaybeScheme::Inst(inst)
+    } else {
+      MaybeScheme::Scheme(Scheme::generalize(inst, vars))
+    }
+  }
+
   // TODO: return self if instantiation fails?
   pub fn to_inst(&mut self, src: &mut VarSource) -> Result<&T> {
     use self::MaybeScheme::*;

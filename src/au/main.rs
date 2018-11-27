@@ -20,7 +20,11 @@ fn print(res: EvalResult) {
   use self::EvalResult::*;
 
   match res {
-    Unit => {},
+    Assert(v) => {
+      for stmt in v {
+        println!("{}.", stmt);
+      }
+    },
     Query(i) => {
       for sol in i {
         println!("{};", sol); // TODO: lazy-evaluate this

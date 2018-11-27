@@ -1,5 +1,5 @@
 use crate::ast::Expr;
-use aunify::{App, Env, Sub, Thing, Value, VarSource};
+use aunify::{App, Env, MaybeScheme, Statement, Sub, Thing, Value, VarSource};
 
 pub struct Evaluator {
   env: Env,
@@ -7,7 +7,7 @@ pub struct Evaluator {
 }
 
 pub enum EvalResult<'a> {
-  Unit,
+  Assert(Vec<MaybeScheme<Statement>>),
   Query(Box<Iterator<Item = Sub> + 'a>),
   UnifyVal(aunify::Result<(Value, Value, Sub, Value, Value)>),
   UnifyApp(aunify::Result<(App, App, Sub, App, App)>),
@@ -24,11 +24,11 @@ impl Evaluator {
   pub fn eval<'a>(&'a mut self, ast: Expr) -> EvalResult {
     match ast {
       Expr::Assert(v) => {
-        for stmt in v {
+        for stmt in v.clone() {
           self.env.state(stmt);
         }
-        
-        EvalResult::Unit
+
+        EvalResult::Assert(v)
       },
       Expr::Query(c) => {
         EvalResult::Query(Box::new(self.env.solve_clause(c, &mut self.var_src)))

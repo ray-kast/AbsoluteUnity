@@ -39,6 +39,12 @@ impl App {
 }
 
 impl Thing for App {
+  fn collect_free_vars(&self, set: &mut HashSet<Var>) {
+    for val in &self.1 {
+      val.collect_free_vars(set);
+    }
+  }
+
   fn sub(mut self, sub: &Sub) -> Self {
     // TODO: maybe substitute predicates?
 

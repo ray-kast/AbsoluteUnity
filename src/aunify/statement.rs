@@ -18,6 +18,11 @@ impl Statement {
 }
 
 impl Thing for Statement {
+  fn collect_free_vars(&self, set: &mut HashSet<Var>) {
+    self.0.collect_free_vars(set);
+    self.1.collect_free_vars(set);
+  }
+
   fn sub(self, sub: &Sub) -> Self {
     Statement(self.0.sub(sub), self.1.sub(sub))
   }

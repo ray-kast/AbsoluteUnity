@@ -28,8 +28,8 @@ impl Clause {
     }
 
     match self {
-      Top => fmt.write_str("")?,
-      Bot => fmt.write_str("")?,
+      Top => fmt.write_str("⊤")?,
+      Bot => fmt.write_str("⊥")?,
       App(a) => Display::fmt(a, fmt)?,
       Not(c) => {
         fmt.write_str("~")?;
@@ -56,6 +56,23 @@ impl Clause {
 }
 
 impl Thing for Clause {
+  fn collect_free_vars(&self, set: &mut HashSet<Var>) {
+    match self {
+      Clause::Top => {},
+      Clause::Bot => {},
+      Clause::App(a) => a.collect_free_vars(set),
+      Clause::Not(c) => c.collect_free_vars(set),
+      Clause::And(a, b) => {
+        a.collect_free_vars(set);
+        b.collect_free_vars(set);
+      },
+      Clause::Or(a, b) => {
+        a.collect_free_vars(set);
+        b.collect_free_vars(set);
+      },
+    }
+  }
+
   fn sub(self, sub: &Sub) -> Self {
     use self::Clause::*;
 

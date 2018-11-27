@@ -15,6 +15,14 @@ impl Sub {
     Ok(self)
   }
 
+  pub fn relevant_to<T: Thing>(mut self, t: &T) -> Self {
+    let vars = t.free_vars();
+
+    self.0.retain(|k, _| vars.contains(k));
+
+    self
+  }
+
   pub fn merge(mut self, rhs: Self) -> Result<Self> {
     for (var, is) in rhs.0 {
       self = self.with(var, is)?;
@@ -31,6 +39,13 @@ impl Sub {
 }
 
 impl Thing for Sub {
+  fn collect_free_vars(&self, set: &mut HashSet<Var>) {
+    for (var, is) in &self.0 {
+      set.insert(var.clone());
+      is.collect_free_vars(set);
+    }
+  }
+
   fn sub(mut self, sub: &Sub) -> Self {
     use self::HashEntry::*;
 
@@ -59,8 +74,6 @@ impl Display for Sub {
       // An empty Sub implies top
       fmt.write_str("⊤")?;
     } else {
-      fmt.write_str("{")?;
-
       let mut first = true;
 
       for (var, is) in &self.0 {
@@ -72,12 +85,10 @@ impl Display for Sub {
 
         Display::fmt(var, fmt)?;
 
-        fmt.write_str(" ~ ")?;
+        fmt.write_str(" <- ")?;
 
         Display::fmt(is, fmt)?;
       }
-
-      fmt.write_str("}")?;
     }
 
     Ok(())

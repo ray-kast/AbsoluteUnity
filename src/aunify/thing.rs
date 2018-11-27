@@ -30,6 +30,22 @@ pub trait Thing {
 }
 
 // TODO: this may need to cover non-deterministic cases
+pub trait UnifyCore {
+  fn unify_core(&self, rhs: &Self) -> Result<Sub>;
+}
+
 pub trait Unify {
   fn unify(&self, rhs: &Self) -> Result<Sub>;
+}
+
+impl<T: Thing + UnifyCore> Unify for T {
+  fn unify(&self, rhs: &Self) -> Result<Sub> {
+    if self.free_vars().is_disjoint(&rhs.free_vars()) {
+      self.unify_core(rhs)
+    } else {
+      Err(
+        ErrorKind::UnsolvableUnify("some variables occur on both sides").into(),
+      )
+    }
+  }
 }

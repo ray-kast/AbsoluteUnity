@@ -54,19 +54,25 @@ mod app {
     .is_err());
   }
 
-  // #[test]
-  // fn unify_bad() {
-  //   let pred_eq = pred_eq();
+  #[test]
+  fn unify_bad() {
+    let pred_eq = pred_eq();
 
-  //   // TODO: this should fail because x is on both sides
-  //   assert!(App::new(
-  //     pred_eq.clone(),
-  //     vec![Value::Var(Var("x".into())), Value::Var(Var("x".into()))]
-  //   )
-  //   .unify(&App::new(
-  //     pred_eq.clone(),
-  //     vec![Value::Var(Var("x".into())), Value::Var(Var("y".into()))]
-  //   ))
-  //   .is_err());
-  // }
+    // This fails because x is on both sides
+    assert!(App::new(
+      pred_eq.clone(),
+      vec![
+        Value::Var(Var::Formal("x".into())),
+        Value::Var(Var::Formal("x".into()))
+      ]
+    )
+    .unify(&App::new(
+      pred_eq.clone(),
+      vec![
+        Value::Var(Var::Formal("x".into())),
+        Value::Var(Var::Formal("y".into()))
+      ]
+    ))
+    .is_err());
+  }
 }

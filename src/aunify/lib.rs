@@ -42,6 +42,11 @@ error_chain! {
       description("predicate mismatch")
       display("predicates {} and {} don't match", a, b)
     }
+
+    UnsolvableUnify(msg: &'static str) {
+      description("unsolvable unify")
+      display("unsolvable unify: {}", msg)
+    }
   }
 }
 
@@ -49,7 +54,7 @@ error_chain! {
 mod tests;
 
 mod prelude {
-  pub use super::*;
+  pub use super::{thing::UnifyCore, *};
   pub use std::{
     collections::{hash_map::Entry as HashEntry, HashMap, HashSet},
     fmt::{self, Display},

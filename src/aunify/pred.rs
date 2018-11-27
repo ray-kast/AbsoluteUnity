@@ -56,8 +56,8 @@ impl Thing for App {
   }
 }
 
-impl Unify for App {
-  fn unify(&self, rhs: &App) -> Result<Sub> {
+impl UnifyCore for App {
+  fn unify_core(&self, rhs: &App) -> Result<Sub> {
     if self.0 != rhs.0 {
       return Err(ErrorKind::PredMismatch(self.0.clone(), rhs.0.clone()).into());
     }

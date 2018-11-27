@@ -26,6 +26,7 @@ impl Thing for Value {
   }
 }
 
+// NOTE: this does not implement UnifyCore because var-var bindings are okay here
 impl Unify for Value {
   fn unify(&self, rhs: &Value) -> Result<Sub> {
     use self::Value::*;

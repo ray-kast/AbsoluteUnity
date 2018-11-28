@@ -17,6 +17,7 @@ path = "src/au/main.rs"
 lalrpop = "0.16.1"
 
 [dependencies]
+clap = "2.32.0"
 error-chain = "0.12.0"
 lalrpop-util = "0.16.1"
 lazy_static = "1.2.0"

@@ -34,5 +34,9 @@ pub enum Expr {
   UnifyApp(MaybeScheme<App>, MaybeScheme<App>),
   PrintVal(MaybeScheme<Value>),
   PrintStmt(MaybeScheme<Statement>),
+  PrintEnv,
   Reset,
 }
+
+#[derive(Debug)]
+pub struct Input(pub Vec<MaybeScheme<Statement>>);

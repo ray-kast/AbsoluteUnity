@@ -32,14 +32,19 @@ ExplicitMaybeScheme<T>: MaybeScheme<T> = {
 // Nonterminals
 
 pub Expr: Expr = {
-  (<MaybeScheme<Statement>> ".")+ => Expr::Assert(<>),
+  Input => Expr::Assert(<>.0),
   <Clause> "?" => Expr::Query(<>),
   <ExplicitMaybeScheme<Value>> "<>" <ExplicitMaybeScheme<Value>> => Expr::UnifyVal(<>),
   <ExplicitMaybeScheme<App>> "<>" <ExplicitMaybeScheme<App>> => Expr::UnifyApp(<>),
   "#" <ExplicitMaybeScheme<Value>> => Expr::PrintVal(<>),
   "#" <ExplicitMaybeScheme<Statement>> => Expr::PrintStmt(<>),
+  "/e" => Expr::PrintEnv,
   "/r" => Expr::Reset,
 };
+
+pub Input: Input = {
+  (<MaybeScheme<Statement>> ".")+ => Input(<>),
+}
 
 pub Statement: Statement = {
   <App> r":-|⊢" <Clause> => Statement::new(<>),

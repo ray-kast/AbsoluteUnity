@@ -1,6 +1,6 @@
 use crate::{
-  ast::{Expr as Ast, ParserTag},
-  parser::ExprParser,
+  ast::{Expr as Ast, Input as InputAst, ParserTag},
+  parser::{ExprParser, InputParser},
 };
 use lalrpop_util::ParseError;
 use rustyline::{self, error::ReadlineError, Editor};
@@ -10,6 +10,7 @@ pub struct Reader<'a> {
   histfile: &'a Path,
   editor: Editor<()>,
   parser: ExprParser,
+  input_parser: InputParser,
   parser_tag: ParserTag,
 }
 
@@ -24,6 +25,7 @@ impl<'a> Reader<'a> {
       histfile: histfile.as_ref(),
       editor: Editor::new(),
       parser: ExprParser::new(),
+      input_parser: InputParser::new(),
       parser_tag: ParserTag::new(),
     };
 
@@ -66,6 +68,20 @@ impl<'a> Reader<'a> {
         Err(ReadlineError::Eof) => break Stop,
         Err(e) => panic!(format!("{}", e)),
       }
+    }
+  }
+
+  pub fn read_input<N: AsRef<str>>(
+    &mut self,
+    name: N,
+    input: &str,
+  ) -> Option<InputAst> {
+    match self.input_parser.parse(&mut self.parser_tag, input) {
+      Ok(i) => Some(i),
+      Err(e) => {
+        println!("failed to read input {}: {}", name.as_ref(), e);
+        None
+      },
     }
   }
 }

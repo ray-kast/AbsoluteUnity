@@ -1,4 +1,4 @@
-use crate::ast::Expr;
+use crate::ast::{Expr, Input};
 use aunify::{App, Env, MaybeScheme, Statement, Sub, Thing, Value, VarSource};
 
 pub struct Evaluator {
@@ -14,6 +14,7 @@ pub enum EvalResult<'a> {
   UnifyApp(aunify::Result<(App, App, Sub, App, App)>),
   PrintVal(MaybeScheme<Value>),
   PrintStmt(MaybeScheme<Statement>),
+  PrintEnv(&'a Vec<MaybeScheme<Statement>>),
 }
 
 impl Evaluator {
@@ -60,10 +61,17 @@ impl Evaluator {
       ),
       Expr::PrintVal(v) => EvalResult::PrintVal(v),
       Expr::PrintStmt(s) => EvalResult::PrintStmt(s),
+      Expr::PrintEnv => EvalResult::PrintEnv(self.env.premises()),
       Expr::Reset => {
         *self = Evaluator::new();
         EvalResult::Unit
       },
+    }
+  }
+
+  pub fn eval_input(&mut self, ast: Input) {
+    for stmt in ast.0 {
+      self.env.state(stmt);
     }
   }
 }

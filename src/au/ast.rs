@@ -33,4 +33,5 @@ pub enum Expr {
   UnifyApp(MaybeScheme<App>, MaybeScheme<App>),
   PrintVal(MaybeScheme<Value>),
   PrintStmt(MaybeScheme<Statement>),
+  Reset,
 }

@@ -38,6 +38,7 @@ pub Expr: Expr = {
   <ExplicitMaybeScheme<App>> "<>" <ExplicitMaybeScheme<App>> => Expr::UnifyApp(<>),
   "#" <ExplicitMaybeScheme<Value>> => Expr::PrintVal(<>),
   "#" <ExplicitMaybeScheme<Statement>> => Expr::PrintStmt(<>),
+  "/r" => Expr::Reset,
 };
 
 pub Statement: Statement = {

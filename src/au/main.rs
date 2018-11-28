@@ -20,32 +20,33 @@ fn print(res: EvalResult) {
   use self::EvalResult::*;
 
   match res {
+    Unit => {},
     Assert(v) => {
       for stmt in v {
-        println!("{}.", stmt);
+        println!(" {}.", stmt);
       }
     },
     Query(i) => {
       for sol in i {
-        println!("{};", sol); // TODO: lazy-evaluate this
+        println!(" {};", sol); // TODO: lazy-evaluate this
       }
 
-      println!("⊥.");
+      println!(" ⊥.");
     },
     UnifyVal(Ok((a, b, sub, a2, b2))) => {
-      println!("unify result: {}", sub);
-      println!("    lhs: {} ~ {}", a, a2);
-      println!("    rhs: {} ~ {}", b, b2);
+      println!(" unify result: {}", sub);
+      println!("     lhs: {} ~ {}", a, a2);
+      println!("     rhs: {} ~ {}", b, b2);
     },
-    UnifyVal(Err(e)) => println!("unify failed: {}", e),
+    UnifyVal(Err(e)) => println!(" unify failed: {}", e),
     UnifyApp(Ok((a, b, sub, a2, b2))) => {
-      println!("unify result: {}", sub);
-      println!("    lhs: {} ~ {}", a, a2);
-      println!("    rhs: {} ~ {}", b, b2);
+      println!(" unify result: {}", sub);
+      println!("     lhs: {} ~ {}", a, a2);
+      println!("     rhs: {} ~ {}", b, b2);
     },
-    UnifyApp(Err(e)) => println!("unify failed: {}", e),
-    PrintVal(v) => println!("{}", v),
-    PrintStmt(s) => println!("{}", s),
+    UnifyApp(Err(e)) => println!(" unify failed: {}", e),
+    PrintVal(v) => println!(" {}", v),
+    PrintStmt(s) => println!(" {}", s),
   }
 }
 

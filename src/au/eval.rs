@@ -7,6 +7,7 @@ pub struct Evaluator {
 }
 
 pub enum EvalResult<'a> {
+  Unit,
   Assert(Vec<MaybeScheme<Statement>>),
   Query(Box<Iterator<Item = Sub> + 'a>),
   UnifyVal(aunify::Result<(Value, Value, Sub, Value, Value)>),
@@ -57,6 +58,10 @@ impl Evaluator {
       ),
       Expr::PrintVal(v) => EvalResult::PrintVal(v),
       Expr::PrintStmt(s) => EvalResult::PrintStmt(s),
+      Expr::Reset => {
+        *self = Evaluator::new();
+        EvalResult::Unit
+      },
     }
   }
 }

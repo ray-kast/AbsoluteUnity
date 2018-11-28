@@ -3,8 +3,9 @@ use super::prelude::*;
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Value {
   Var(Var),
-  Atom(String), // TODO: add some kind of configurable domain of discourse
-  Tuple(Vec<Value>),
+  Atom(String),
+  Tuple(Vec<Value>), // TODO: make tuples into their own type
+  List(Box<List>),
 }
 
 impl Thing for Value {
@@ -19,17 +20,21 @@ impl Thing for Value {
           val.collect_free_vars(set);
         }
       },
+      Value::List(l) => l.collect_free_vars(set),
     }
   }
 
-  fn sub(self, sub: &Sub) -> Self {
+  fn sub(self, sub: &Sub) -> Result<Self> {
     use self::Value::*;
 
-    match self {
+    Ok(match self {
       Var(v) => sub.get(&v).map_or(Var(v), |l| l.clone()),
       Atom(a) => Atom(a),
-      Tuple(v) => Tuple(v.into_iter().map(|l| l.sub(sub)).collect())
-    }
+      Tuple(v) => {
+        Tuple(v.into_iter().map(|l| l.sub(sub)).collect::<Result<_>>()?)
+    },
+      List(l) => List(Box::new(l.sub(sub)?)),
+    })
   }
 }
 
@@ -38,12 +43,14 @@ impl Unify for Value {
     use self::Value::*;
 
     match (self, rhs) {
-      (Var(a), Var(b)) => if a == b {
-        Ok(Sub::top())
-      } else {
-        Sub::top().with(a.clone(), Var(b.clone()))
+      (Var(a), Var(b)) => {
+        if a == b {
+          Ok(Sub::top())
+        } else {
+          Sub::top().with(a.clone(), Var(b.clone()))
+        }
       },
-      (Var(a), b) => {
+    (Var(a), b) => {
         if b.free_vars().contains(a) {
           Err(ErrorKind::VarBothSides(a.clone()).into())
         } else {
@@ -62,13 +69,27 @@ impl Unify for Value {
         let mut ret = Sub::top();
 
         for (l, r) in a.iter().zip(b.iter()) {
-          let sub = &l.clone().sub(&ret).unify(r)?;
-          ret = ret.sub(sub);
+          let sub = &l.clone().sub(&ret)?.unify(&r.clone().sub(&ret)?)?;
+          ret = ret.sub(sub)?;
         }
 
         Ok(ret)
       },
+      (List(a), List(b)) => a.unify(b),
       _ => Err(ErrorKind::BadValueUnify(self.clone(), rhs.clone()).into()),
+    }
+  }
+}
+
+impl IntoTrace for Value {
+  fn into_trace(self) -> Self {
+    use self::Value::*;
+
+    match self {
+      Var(v) => Var(v.into_trace()),
+      Atom(a) => Atom(a),
+      Tuple(t) => Tuple(t.into_iter().map(|v| v.into_trace()).collect()),
+      List(l) => List(Box::new(l.into_trace())),
     }
   }
 }
@@ -99,6 +120,7 @@ impl Display for Value {
 
         fmt.write_str(")")?;
       },
+      Value::List(l) => Display::fmt(l, fmt)?,
     }
 
     Ok(())

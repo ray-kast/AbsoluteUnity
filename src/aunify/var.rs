@@ -6,6 +6,17 @@ pub enum Var {
   Auto(u32),
 }
 
+impl IntoTrace for Var {
+  fn into_trace(self) -> Self {
+    use self::Var::*;
+
+    match self {
+      Formal(s) => Formal(s),
+      Auto(_) => Auto(0),
+    }
+  }
+}
+
 impl Display for Var {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     match self {
@@ -25,7 +36,7 @@ impl Display for Var {
 
 pub struct VarSource {
   curr: u32,
-} // TODO
+}
 
 impl VarSource {
   pub fn new() -> Self { Self { curr: 0 } }

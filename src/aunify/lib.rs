@@ -6,6 +6,7 @@ extern crate error_chain; // TODO: this should be able to be removed, somehow
 pub mod clause;
 pub mod env;
 pub mod gen_iter;
+pub mod list;
 pub mod pred;
 pub mod scheme;
 pub mod statement;
@@ -17,6 +18,7 @@ pub mod var;
 pub use self::{
   clause::Clause,
   env::Env,
+  list::List,
   pred::{App, Pred, RcPred},
   scheme::{MaybeScheme, Scheme},
   statement::Statement,
@@ -32,10 +34,21 @@ error_chain! {
   foreign_links {}
 
   errors {
+    SubBadType(expect: &'static str, got: Value) {
+      description("substitution failure: bad type")
+      display("substitution failure: expected {}, got {}", expect, got)
+    }
+
     // TODO: add some kind of traceback?
     BadValueUnify(a: Value, b: Value) {
       description("values couldn't be unified")
       display("values {} and {} couldn't be unified", a, b)
+    }
+
+    // TODO: add some kind of traceback?
+    BadListUnify(a: List, b: List) {
+      description("lists couldn't be unified")
+      display("lists {} and {} couldn't be unified", a, b)
     }
 
     PredMismatch(a: RcPred, b: RcPred) {
@@ -54,7 +67,7 @@ error_chain! {
 mod tests;
 
 mod prelude {
-  pub use super::*;
+  pub use super::{env::IntoTrace, *};
   pub use std::{
     collections::{hash_map::Entry as HashEntry, HashMap, HashSet},
     fmt::{self, Display},

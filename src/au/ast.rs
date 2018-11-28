@@ -1,5 +1,6 @@
 pub use aunify::{
-  App, Clause, MaybeScheme, Pred, RcPred, Scheme, Statement, Value, Var,
+  list::Tail, App, Clause, List, MaybeScheme, Pred, RcPred, Scheme, Statement,
+  Value, Var,
 };
 use std::collections::HashMap;
 

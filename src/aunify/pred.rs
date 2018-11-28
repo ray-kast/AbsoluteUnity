@@ -23,6 +23,7 @@ impl Display for Pred {
   }
 }
 
+// TODO: this should really just use a tuple
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct App(RcPred, Vec<Value>);
 
@@ -34,8 +35,6 @@ impl App {
 
     App(pred, args)
   }
-
-  pub fn into_parts(self) -> (RcPred, Vec<Value>) { (self.0, self.1) }
 }
 
 impl Thing for App {
@@ -45,14 +44,14 @@ impl Thing for App {
     }
   }
 
-  fn sub(mut self, sub: &Sub) -> Self {
+  fn sub(mut self, sub: &Sub) -> Result<Self> {
     // TODO: maybe substitute predicates?
 
     for val in &mut self.1 {
-      val.sub_self(sub);
+      val.sub_self(sub)?;
     }
 
-    self
+    Ok(self)
   }
 }
 
@@ -67,11 +66,17 @@ impl Unify for App {
     let mut ret = Sub::top();
 
     for (a, b) in self.1.iter().zip(rhs.1.iter()) {
-      let sub = &a.clone().sub(&ret).unify(b)?;
-      ret = ret.sub(sub);
+      let sub = &a.clone().sub(&ret)?.unify(&b.clone().sub(&ret)?)?;
+      ret = ret.sub(sub)?;
     }
 
     Ok(ret)
+  }
+}
+
+impl IntoTrace for App {
+  fn into_trace(self) -> Self {
+    App(self.0, self.1.into_iter().map(|v| v.into_trace()).collect())
   }
 }
 

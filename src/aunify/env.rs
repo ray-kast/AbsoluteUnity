@@ -3,28 +3,8 @@ use std::{cell::RefCell, rc::Rc};
 
 pub struct Env(Vec<MaybeScheme<Statement>>);
 
-#[derive(Clone, Hash, PartialEq, Eq)]
-struct CacheKey(RcPred, Vec<CkVal>);
-
-#[derive(Clone, Hash, PartialEq, Eq)]
-enum CkVal {
-  AutoVar,
-  FormalVar(String),
-  Atom(String),
-  Tuple(Vec<CkVal>),
-}
-
-impl From<Value> for CkVal {
-  fn from(v: Value) -> Self {
-    match v {
-      Value::Var(Var::Auto(_)) => CkVal::AutoVar,
-      Value::Var(Var::Formal(v)) => CkVal::FormalVar(v),
-      Value::Atom(a) => CkVal::Atom(a),
-      Value::Tuple(v) => {
-        CkVal::Tuple(v.into_iter().map(|v| v.into()).collect())
-      },
-    }
-  }
+pub trait IntoTrace {
+  fn into_trace(self) -> Self;
 }
 
 impl Env {
@@ -39,37 +19,31 @@ impl Env {
     &'a self,
     app: App,
     src: &'a mut VarSource,
-    trace: Rc<RefCell<HashSet<CacheKey>>>,
+    trace: Rc<RefCell<HashSet<App>>>,
   ) -> impl Iterator<Item = Sub> + 'a {
     GenIter(move || {
-      let key = {
-        let (pred, vals) = app.clone().into_parts();
-
-        CacheKey(pred, vals.into_iter().map(|v| v.into()).collect())
-      };
+      let key = app.clone().into_trace();
 
       if !trace.borrow_mut().insert(key.clone()) {
         // println!("dropping {}", app);
         return;
       }
 
-      for (i, stmt) in self.0.iter().enumerate() {
-        match stmt
-          .as_inst(src)
-          .and_then(|stmt| stmt.lhs().unify(&app).map(|sub| (stmt, sub)))
-        {
-          Ok((stmt, sub)) => {
-            // println!("{} <> {} under {}", stmt.lhs(), app, sub);
-
-            // TODO: THIS IS VERY BAD, WE COULD GET TRAPPED IN A LOOP
+      // TODO: clean this up, this is very messy
+      for stmt in &self.0 {
+        match stmt.as_inst(src).and_then(|stmt| {
+          stmt
+            .lhs()
+            .unify(&app)
+            .and_then(|sub| stmt.rhs().clone().sub(&sub).map(|rhs| (rhs, sub)))
+        }) {
+          Ok((rhs, sub)) => {
             // Box the iterator to avoid type recursion
-            for sub2 in Box::new(self.solve_clause_impl(
-              stmt.rhs().clone().sub(&sub),
-              src,
-              trace.clone(),
-            )) {
-              if let Ok(merged) = sub2.merge(sub.clone()) {
-                yield merged.relevant_to(&app);
+            for sub2 in
+              Box::new(self.solve_clause_impl(rhs, src, trace.clone()))
+            {
+              if let Ok(ret) = sub.clone().sub(&sub2) {
+                yield ret.relevant_to(&app);
               }
             }
           },
@@ -94,7 +68,7 @@ impl Env {
     &'a self,
     clause: Clause,
     src: &'a mut VarSource,
-    trace: Rc<RefCell<HashSet<CacheKey>>>,
+    trace: Rc<RefCell<HashSet<App>>>,
   ) -> impl Iterator<Item = Sub> + 'a {
     GenIter(move || match clause {
       Clause::Top => yield Sub::top(),
@@ -113,12 +87,18 @@ impl Env {
           .collect::<Vec<_>>()
         {
           // TODO: this is gonna result in a lot of cloning...
-          for sub2 in Box::new(self.solve_clause_impl(
-            b.clone().sub(&sub),
-            src,
-            trace.clone(),
-          )) {
-            yield sub2;
+          match b.clone().sub(&sub) {
+            Ok(b) => {
+              for sub2 in
+                Box::new(self.solve_clause_impl(b, src, trace.clone()))
+              {
+                match sub.clone().sub(&sub2) {
+                  Ok(s) => yield s,
+                  Err(_) => {},
+                }
+              }
+            },
+            Err(_) => {},
           }
         }
       },

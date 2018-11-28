@@ -73,17 +73,17 @@ impl Thing for Clause {
     }
   }
 
-  fn sub(self, sub: &Sub) -> Self {
+  fn sub(self, sub: &Sub) -> Result<Self> {
     use self::Clause::*;
 
-    match self {
+    Ok(match self {
       Top => Top,
       Bot => Bot,
-      App(a) => App(a.sub(sub)),
-      Not(c) => Not(Box::new(c.sub(sub))),
-      And(a, b) => And(Box::new(a.sub(sub)), Box::new(b.sub(sub))),
-      Or(a, b) => Or(Box::new(a.sub(sub)), Box::new(b.sub(sub))),
-    }
+      App(a) => App(a.sub(sub)?),
+      Not(c) => Not(Box::new(c.sub(sub)?)),
+      And(a, b) => And(Box::new(a.sub(sub)?), Box::new(b.sub(sub)?)),
+      Or(a, b) => Or(Box::new(a.sub(sub)?), Box::new(b.sub(sub)?)),
+    })
   }
 }
 

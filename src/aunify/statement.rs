@@ -23,8 +23,8 @@ impl Thing for Statement {
     self.1.collect_free_vars(set);
   }
 
-  fn sub(self, sub: &Sub) -> Self {
-    Statement(self.0.sub(sub), self.1.sub(sub))
+  fn sub(self, sub: &Sub) -> Result<Self> {
+    Ok(Statement(self.0.sub(sub)?, self.1.sub(sub)?))
   }
 }
 

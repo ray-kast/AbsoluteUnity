@@ -23,14 +23,6 @@ impl Sub {
     self
   }
 
-  pub fn merge(mut self, rhs: Self) -> Result<Self> {
-    for (var, is) in rhs.0 {
-      self = self.with(var, is)?;
-    }
-
-    Ok(self)
-  }
-
   pub fn into_map(self) -> HashMap<Var, Value> { self.0 }
 
   pub fn get(&self, var: &Var) -> Option<&Value> { self.0.get(var) }
@@ -46,12 +38,12 @@ impl Thing for Sub {
     }
   }
 
-  fn sub(mut self, sub: &Sub) -> Self {
+  fn sub(mut self, sub: &Sub) -> Result<Self> {
     use self::HashEntry::*;
 
     for (var, is) in &mut self.0 {
       if !sub.0.contains_key(var) {
-        is.sub_self(sub);
+        is.sub_self(sub)?;
       }
     }
 
@@ -60,11 +52,11 @@ impl Thing for Sub {
         Vacant(v) => {
           v.insert(is.clone());
         },
-        Occupied(o) => o.into_mut().sub_self(sub),
+        Occupied(o) => o.into_mut().sub_self(sub)?,
       }
     }
 
-    self
+    Ok(self)
   }
 }
 

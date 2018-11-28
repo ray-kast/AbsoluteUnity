@@ -23,7 +23,7 @@ impl<T: Thing> Scheme<T> {
       sub = sub.with(var, Value::Var(src.acquire()))?;
     }
 
-    Ok(self.1.sub(&sub))
+    self.1.sub(&sub)
   }
 }
 
@@ -36,7 +36,7 @@ impl<T: Thing + Clone> Scheme<T> {
       sub = sub.with(var.clone(), Value::Var(src.acquire()))?;
     }
 
-    Ok(self.1.clone().sub(&sub))
+    self.1.clone().sub(&sub)
   }
 }
 

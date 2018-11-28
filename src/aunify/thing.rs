@@ -13,19 +13,24 @@ pub trait Thing {
     ret
   }
 
-  fn sub(self, sub: &Sub) -> Self;
+  // TODO: return self on substitution failure?
+  fn sub(self, sub: &Sub) -> Result<Self>
+  where
+    Self: Sized;
 
-  fn sub_self(&mut self, sub: &Sub)
+  fn sub_self(&mut self, sub: &Sub) -> Result<()>
   where
     Self: Sized,
   {
     let mut me = unsafe { mem::zeroed() };
     mem::swap(self, &mut me);
 
-    me = me.sub(sub);
+    me = me.sub(sub)?;
 
     mem::swap(self, &mut me);
     mem::forget(me);
+
+    Ok(())
   }
 }
 

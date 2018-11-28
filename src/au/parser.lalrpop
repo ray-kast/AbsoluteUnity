@@ -72,11 +72,24 @@ PrimClause: Clause = {
 
 pub App: App = <Atom> "(" <CommaListOpt<Value>> ")" => tag.make_app(<>);
 
-pub Value: Value = {
+pub Value: Value = ListValue;
+
+ListValue: Value = {
+  List => Value::List(Box::new(<>)),
+  TupleValue,
+};
+
+pub List: List = {
+  <h:TupleValue> ":" "[" <v:Var> "]" => List::Cons(h, Tail::Open(v)),
+  <h:TupleValue> ":" <l:List> => List::Cons(h, Tail::Close(Box::new(l))),
+  "[" "]" => List::Nil,
+}
+
+TupleValue: Value = {
   Var => Value::Var(<>),
   Atom => Value::Atom(<>),
   "(" <CommaList<Value>> ")" => Value::Tuple(<>),
-};
+}
 
 Var: Var = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => Var::Formal(<>.into());
 Atom: String = r"[\p{Ll}\p{N}][\p{L}\p{N}]*" => <>.into();

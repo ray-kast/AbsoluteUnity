@@ -1,78 +1,22 @@
 mod app {
-  use crate::{App, Pred, RcPred, Sub, Unify, Value, Var};
-
-  fn pred_eq() -> RcPred { Pred::new_rc("eq".into(), 2) }
+  use super::super::{helpers::value::*, zip_unify};
+  use crate::{App, Pred, Unify};
 
   #[test]
   fn unify() {
-    let pred_eq = pred_eq();
+    zip_unify::test_equal_len(|a, b| {
+      let pred = Pred::new_rc("test".into(), a.len());
 
-    assert_eq!(
-      App::new(
-        pred_eq.clone(),
-        vec![
-          Value::Var(Var::Formal("x".into())),
-          Value::Var(Var::Formal("x".into()))
-        ]
-      )
-      .unify(&App::new(
-        pred_eq.clone(),
-        vec![
-          Value::Var(Var::Formal("y".into())),
-          Value::Var(Var::Formal("y".into()))
-        ]
-      ))
-      .unwrap(),
-      Sub::top()
-        .with(Var::Formal("x".into()), Value::Var(Var::Formal("y".into())))
-        .unwrap()
-    );
+      App::new(pred.clone(), a).unify(&App::new(pred, b))
+    });
 
-    // assert_eq!(
-    //   App::new(
-    //     pred.clone(),
-    //     vec![Value::Var(Var("x".into())), Value::Atom("a".into())]
-    //   )
-    //   .unify(&App::new(
-    //     pred.clone(),
-    //     vec![Value::Var(Var("y".into())), Value::Var(Var("a".into()))]
-    //   )),
-    //   Some(Sub::top())
-    // );
+    zip_unify::test_noneq_len(|a, b| {
+      App::new(Pred::new_rc("test".into(), a.len()), a)
+        .unify(&App::new(Pred::new_rc("test".into(), b.len()), b))
+    });
 
-    assert!(App::new(
-      pred_eq.clone(),
-      vec![
-        Value::Var(Var::Formal("x".into())),
-        Value::Var(Var::Formal("x".into()))
-      ]
-    )
-    .unify(&App::new(
-      pred_eq.clone(),
-      vec![Value::Atom("a".into()), Value::Atom("b".into())]
-    ))
-    .is_err());
-
-    // While this is technically incorrect, it is a solvable binding.
-    assert_eq!(
-      App::new(
-        pred_eq.clone(),
-        vec![
-          Value::Var(Var::Formal("x".into())),
-          Value::Var(Var::Formal("x".into()))
-        ]
-      )
-      .unify(&App::new(
-        pred_eq.clone(),
-        vec![
-          Value::Var(Var::Formal("x".into())),
-          Value::Var(Var::Formal("y".into()))
-        ]
-      ))
-      .unwrap(),
-      Sub::top()
-        .with(Var::Formal("x".into()), Value::Var(Var::Formal("y".into())))
-        .unwrap()
-    );
+    assert!(App::new(Pred::new_rc("a".into(), 1), vec![atom("a")])
+      .unify(&App::new(Pred::new_rc("b".into(), 1), vec![atom("a")]))
+      .is_err());
   }
 }

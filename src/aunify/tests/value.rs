@@ -6,12 +6,12 @@ use crate::{Sub, Thing, Unify};
 
 #[test]
 fn free_vars() {
-  assert_eq!(formalvar("x").free_vars(), hset(vec![formal("x")]));
+  assert_eq!(formalv("x").free_vars(), hset(vec![formal("x")]));
 
-  assert_eq!(atom("a").free_vars(), hset(vec![]));
+  assert_eq!(atomv("a").free_vars(), hset(vec![]));
 
   assert_eq!(
-    tuple(vec![formalvar("x"), formalvar("y")]).free_vars(),
+    tuplev(vec![formalv("x"), formalv("y")]).free_vars(),
     hset(vec![formal("x"), formal("y")])
   )
 }
@@ -19,56 +19,56 @@ fn free_vars() {
 #[test]
 fn sub() {
   let sub = Sub::top()
-    .with(formal("x"), formalvar("y"))
+    .with(formal("x"), formalv("y"))
     .unwrap()
-    .with(formal("z"), formalvar("w"))
+    .with(formal("z"), formalv("w"))
     .unwrap();
 
-  assert_eq!(formalvar("x").sub(&sub).unwrap(), formalvar("y"));
+  assert_eq!(formalv("x").sub(&sub).unwrap(), formalv("y"));
 
-  assert_eq!(formalvar("y").sub(&sub).unwrap(), formalvar("y"));
+  assert_eq!(formalv("y").sub(&sub).unwrap(), formalv("y"));
 
-  assert_eq!(atom("x").sub(&sub).unwrap(), atom("x"));
+  assert_eq!(atomv("x").sub(&sub).unwrap(), atomv("x"));
 
   assert_eq!(
-    tuple(vec![formalvar("x"), atom("x"), formalvar("z")])
+    tuplev(vec![formalv("x"), atomv("x"), formalv("z")])
       .sub(&sub)
       .unwrap(),
-    tuple(vec![formalvar("y"), atom("x"), formalvar("w")])
+    tuplev(vec![formalv("y"), atomv("x"), formalv("w")])
   );
 }
 
 #[test]
 fn unify() {
-  assert_eq!(formalvar("x").unify(&formalvar("x")).unwrap(), Sub::top());
+  assert_eq!(formalv("x").unify(&formalv("x")).unwrap(), Sub::top());
 
   assert_eq!(
-    formalvar("x").unify(&formalvar("y")).unwrap(),
-    Sub::top().with(formal("x"), formalvar("y")).unwrap()
+    formalv("x").unify(&formalv("y")).unwrap(),
+    Sub::top().with(formal("x"), formalv("y")).unwrap()
   );
 
   assert_eq!(
-    formalvar("x").unify(&atom("a")).unwrap(),
-    Sub::top().with(formal("x"), atom("a")).unwrap()
+    formalv("x").unify(&atomv("a")).unwrap(),
+    Sub::top().with(formal("x"), atomv("a")).unwrap()
   );
 
-  assert!(formalvar("x")
-    .unify(&tuple(vec![formalvar("x"), atom("a")]))
+  assert!(formalv("x")
+    .unify(&tuplev(vec![formalv("x"), atomv("a")]))
     .is_err());
 
   assert_eq!(
-    atom("a").unify(&formalvar("y")).unwrap(),
-    Sub::top().with(formal("y"), atom("a")).unwrap()
+    atomv("a").unify(&formalv("y")).unwrap(),
+    Sub::top().with(formal("y"), atomv("a")).unwrap()
   );
 
-  assert!(tuple(vec![formalvar("y"), atom("a")])
-    .unify(&formalvar("y"))
+  assert!(tuplev(vec![formalv("y"), atomv("a")])
+    .unify(&formalv("y"))
     .is_err());
 
-  assert_eq!(atom("a").unify(&atom("a")).unwrap(), Sub::top());
+  assert_eq!(atomv("a").unify(&atomv("a")).unwrap(), Sub::top());
 
-  zip_unify::test_equal_len(|a, b| tuple(a).unify(&tuple(b)));
-  zip_unify::test_noneq_len(|a, b| tuple(a).unify(&tuple(b)));
+  zip_unify::test_equal_len(|a, b| tuplev(a).unify(&tuplev(b)));
+  zip_unify::test_noneq_len(|a, b| tuplev(a).unify(&tuplev(b)));
 
-  assert!(atom("a").unify(&atom("b")).is_err());
+  assert!(atomv("a").unify(&atomv("b")).is_err());
 }

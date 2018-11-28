@@ -4,42 +4,42 @@ use crate::{Result, Sub};
 pub fn test_equal_len<F: Fn(Vec<Value>, Vec<Value>) -> Result<Sub>>(f: F) {
   assert_eq!(
     f(
-      vec![formalvar("x"), formalvar("x")],
-      vec![formalvar("y"), formalvar("y")]
+      vec![formalv("x"), formalv("x")],
+      vec![formalv("y"), formalv("y")]
     )
     .unwrap(),
-    Sub::top().with(formal("x"), formalvar("y")).unwrap()
+    Sub::top().with(formal("x"), formalv("y")).unwrap()
   );
 
   assert_eq!(
     f(
-      vec![formalvar("x"), atom("a")],
-      vec![formalvar("y"), formalvar("a")]
+      vec![formalv("x"), atomv("a")],
+      vec![formalv("y"), formalv("a")]
     )
     .unwrap(),
     Sub::top()
-      .with(formal("x"), formalvar("y"))
+      .with(formal("x"), formalv("y"))
       .unwrap()
-      .with(formal("a"), atom("a"))
+      .with(formal("a"), atomv("a"))
       .unwrap()
   );
 
   assert!(f(
-    vec![formalvar("x"), formalvar("x")],
-    vec![atom("a"), atom("b")]
+    vec![formalv("x"), formalv("x")],
+    vec![atomv("a"), atomv("b")]
   )
   .is_err());
 
   assert_eq!(
     f(
-      vec![formalvar("x"), formalvar("x")],
-      vec![formalvar("x"), formalvar("y")]
+      vec![formalv("x"), formalv("x")],
+      vec![formalv("x"), formalv("y")]
     )
     .unwrap(),
-    Sub::top().with(formal("x"), formalvar("y")).unwrap()
+    Sub::top().with(formal("x"), formalv("y")).unwrap()
   );
 }
 
 pub fn test_noneq_len<F: Fn(Vec<Value>, Vec<Value>) -> Result<Sub>>(f: F) {
-  assert!(f(vec![formalvar("x")], vec![formalvar("y"), atom("a")]).is_err());
+  assert!(f(vec![formalv("x")], vec![formalv("y"), atomv("a")]).is_err());
 }

@@ -1,5 +1,5 @@
 use crate::{ast::ParserTag, parser::*};
-use aunify::{App, Pred, Value, Var};
+use aunify::{App, Pred, Tuple, Value, Var};
 
 #[test]
 fn value() {
@@ -42,10 +42,10 @@ fn app() {
     parser.parse(&mut tag, "eq(X, X)").unwrap(),
     App::new(
       Pred::new_rc("eq".into(), 2),
-      vec![
+      Tuple(vec![
         Value::Var(Var::Formal("X".into())),
         Value::Var(Var::Formal("X".into()))
-      ]
+      ])
     )
   );
 
@@ -53,10 +53,10 @@ fn app() {
     parser.parse(&mut tag, "eq(X, X,)").unwrap(),
     App::new(
       Pred::new_rc("eq".into(), 2),
-      vec![
+      Tuple(vec![
         Value::Var(Var::Formal("X".into())),
         Value::Var(Var::Formal("X".into()))
-      ]
+      ])
     )
   );
 
@@ -64,10 +64,10 @@ fn app() {
     parser.parse(&mut tag, "eq(X, atom)").unwrap(),
     App::new(
       Pred::new_rc("eq".into(), 2),
-      vec![
+      Tuple(vec![
         Value::Var(Var::Formal("X".into())),
         Value::Atom("atom".into())
-      ]
+      ])
     )
   );
 
@@ -75,14 +75,14 @@ fn app() {
     parser.parse(&mut tag, "hello(world)").unwrap(),
     App::new(
       Pred::new_rc("hello".into(), 1),
-      vec![Value::Atom("world".into())]
+      Tuple(vec![Value::Atom("world".into())])
     )
   );
 
   // TODO: is there any point to allowing null-order predicates?
   assert_eq!(
     parser.parse(&mut tag, "boi()").unwrap(),
-    App::new(Pred::new_rc("boi".into(), 0), vec![])
+    App::new(Pred::new_rc("boi".into(), 0), Tuple(vec![]))
   );
 
   // TODO: did someone say higher-order predicates?

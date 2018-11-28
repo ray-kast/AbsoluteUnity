@@ -13,14 +13,23 @@ pub mod var {
 }
 
 pub mod value {
-  use super::var::*;
-  pub use crate::Value::{self, *};
+  use super::{tuple::*, var::*};
+  pub use crate::Value::{self, Tuple as TupleV, *};
 
-  pub fn formalvar<S: Into<String>>(s: S) -> Value { Var(formal(s)) }
+  pub fn formalv<S: Into<String>>(s: S) -> Value { Var(formal(s)) }
 
-  pub fn atom<S: Into<String>>(s: S) -> Value { Atom(s.into()) }
+  pub fn atomv<S: Into<String>>(s: S) -> Value { Atom(s.into()) }
 
-  pub fn tuple<I: IntoIterator<Item = Value>>(i: I) -> Value {
+  pub fn tuplev<I: IntoIterator<Item = Value>>(i: I) -> Value {
+    TupleV(tuple(i))
+  }
+}
+
+pub mod tuple {
+  pub use crate::Tuple;
+  use crate::Value;
+
+  pub fn tuple<I: IntoIterator<Item = Value>>(i: I) -> Tuple {
     Tuple(i.into_iter().collect())
   }
 }

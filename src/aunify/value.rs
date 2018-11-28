@@ -4,7 +4,7 @@ use super::prelude::*;
 pub enum Value {
   Var(Var),
   Atom(String),
-  Tuple(Vec<Value>), // TODO: make tuples into their own type
+  Tuple(Tuple), // TODO: make tuples into their own type
   List(Box<List>),
 }
 
@@ -15,11 +15,7 @@ impl Thing for Value {
         set.insert(v.clone());
       },
       Value::Atom(_) => {},
-      Value::Tuple(v) => {
-        for val in v {
-          val.collect_free_vars(set);
-        }
-      },
+      Value::Tuple(t) => t.collect_free_vars(set),
       Value::List(l) => l.collect_free_vars(set),
     }
   }
@@ -30,9 +26,7 @@ impl Thing for Value {
     Ok(match self {
       Var(v) => sub.get(&v).map_or(Var(v), |l| l.clone()),
       Atom(a) => Atom(a),
-      Tuple(v) => {
-        Tuple(v.into_iter().map(|l| l.sub(sub)).collect::<Result<_>>()?)
-    },
+      Tuple(t) => Tuple(t.sub(sub)?),
       List(l) => List(Box::new(l.sub(sub)?)),
     })
   }
@@ -50,7 +44,7 @@ impl Unify for Value {
           Sub::top().with(a.clone(), Var(b.clone()))
         }
       },
-    (Var(a), b) => {
+      (Var(a), b) => {
         if b.free_vars().contains(a) {
           Err(ErrorKind::VarBothSides(a.clone()).into())
         } else {
@@ -65,16 +59,7 @@ impl Unify for Value {
         }
       },
       (Atom(a), Atom(b)) if a == b => Ok(Sub::top()),
-      (Tuple(a), Tuple(b)) if a.len() == b.len() => {
-        let mut ret = Sub::top();
-
-        for (l, r) in a.iter().zip(b.iter()) {
-          let sub = &l.clone().sub(&ret)?.unify(&r.clone().sub(&ret)?)?;
-          ret = ret.sub(sub)?;
-        }
-
-        Ok(ret)
-      },
+      (Tuple(a), Tuple(b)) => a.unify(b),
       (List(a), List(b)) => a.unify(b),
       _ => Err(ErrorKind::BadValueUnify(self.clone(), rhs.clone()).into()),
     }
@@ -88,7 +73,7 @@ impl IntoTrace for Value {
     match self {
       Var(v) => Var(v.into_trace()),
       Atom(a) => Atom(a),
-      Tuple(t) => Tuple(t.into_iter().map(|v| v.into_trace()).collect()),
+      Tuple(t) => Tuple(t.into_trace()),
       List(l) => List(Box::new(l.into_trace())),
     }
   }
@@ -103,23 +88,7 @@ impl Display for Value {
         Display::fmt(a, fmt)?;
         fmt.write_str("｣")?;
       },
-      Value::Tuple(v) => {
-        fmt.write_str("(")?;
-
-        let mut first = true;
-
-        for val in v {
-          if first {
-            first = false;
-          } else {
-            fmt.write_str(", ")?;
-          }
-
-          Display::fmt(val, fmt)?;
-        }
-
-        fmt.write_str(")")?;
-      },
+      Value::Tuple(t) => Display::fmt(t, fmt)?,
       Value::List(l) => Display::fmt(l, fmt)?,
     }
 

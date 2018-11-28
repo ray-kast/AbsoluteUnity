@@ -1,6 +1,6 @@
 pub use aunify::{
   list::Tail, App, Clause, List, MaybeScheme, Pred, RcPred, Scheme, Statement,
-  Value, Var,
+  Tuple, Value, Var,
 };
 use std::collections::HashMap;
 
@@ -22,7 +22,7 @@ impl ParserTag {
       .entry((name.clone(), vals.len()))
       .or_insert_with(|| Pred::new_rc(name, vals.len()));
 
-    App::new(pred.clone(), vals)
+    App::new(pred.clone(), Tuple(vals))
   }
 }
 

@@ -37,24 +37,26 @@ impl Evaluator {
         EvalResult::Query(Box::new(self.env.solve_clause(c, &mut self.var_src)))
       },
       Expr::UnifyVal(a, b) => EvalResult::UnifyVal(
-        a.inst_and_unify(b, &mut self.var_src).and_then(|(a, b, sub)| {
-          let a1 = a.clone();
-          let b1 = b.clone();
-          let a2 = a.sub(&sub)?;
-          let b2 = b.sub(&sub)?;
+        a.inst_and_unify(b, &mut self.var_src)
+          .and_then(|(a, b, sub)| {
+            let a1 = a.clone();
+            let b1 = b.clone();
+            let a2 = a.sub(&sub)?;
+            let b2 = b.sub(&sub)?;
 
-          Ok((a1, b1, sub, a2, b2))
-        }),
+            Ok((a1, b1, sub, a2, b2))
+          }),
       ),
       Expr::UnifyApp(a, b) => EvalResult::UnifyApp(
-        a.inst_and_unify(b, &mut self.var_src).and_then(|(a, b, sub)| {
-          let a1 = a.clone();
-          let b1 = b.clone();
-          let a2 = a.sub(&sub)?;
-          let b2 = b.sub(&sub)?;
+        a.inst_and_unify(b, &mut self.var_src)
+          .and_then(|(a, b, sub)| {
+            let a1 = a.clone();
+            let b1 = b.clone();
+            let a2 = a.sub(&sub)?;
+            let b2 = b.sub(&sub)?;
 
-          Ok((a1, b1, sub, a2, b2))
-        }),
+            Ok((a1, b1, sub, a2, b2))
+          }),
       ),
       Expr::PrintVal(v) => EvalResult::PrintVal(v),
       Expr::PrintStmt(s) => EvalResult::PrintStmt(s),

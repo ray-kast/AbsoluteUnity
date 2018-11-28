@@ -12,6 +12,7 @@ pub mod scheme;
 pub mod statement;
 pub mod sub;
 pub mod thing;
+pub mod tuple;
 pub mod value;
 pub mod var;
 
@@ -24,6 +25,7 @@ pub use self::{
   statement::Statement,
   sub::Sub,
   thing::{Thing, Unify},
+  tuple::Tuple,
   value::Value,
   var::{Var, VarSource},
 };
@@ -49,6 +51,12 @@ error_chain! {
     BadListUnify(a: List, b: List) {
       description("lists couldn't be unified")
       display("lists {} and {} couldn't be unified", a, b)
+    }
+
+    // TODO: add some kind of traceback?
+    BadTupleUnify(a: Tuple, b: Tuple) {
+      description("tuples couldn't be unified")
+      display("tuples {} and {} couldn't be unified", a, b)
     }
 
     PredMismatch(a: RcPred, b: RcPred) {

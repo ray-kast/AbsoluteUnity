@@ -88,7 +88,7 @@ pub List: List = {
 TupleValue: Value = {
   Var => Value::Var(<>),
   Atom => Value::Atom(<>),
-  "(" <CommaList<Value>> ")" => Value::Tuple(<>),
+  "(" <CommaList<Value>> ")" => Value::Tuple(Tuple(<>)),
 }
 
 Var: Var = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => Var::Formal(<>.into());

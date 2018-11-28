@@ -58,9 +58,7 @@ impl<T: Display> Display for Scheme<T> {
 
     fmt.write_str(".")?;
 
-    Display::fmt(&self.1, fmt)?;
-
-    Ok(())
+    Display::fmt(&self.1, fmt)
   }
 }
 
@@ -148,10 +146,8 @@ impl<T: Thing + Unify> MaybeScheme<T> {
 impl<T: Display> Display for MaybeScheme<T> {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      MaybeScheme::Scheme(s) => Display::fmt(s, fmt)?,
-      MaybeScheme::Inst(i) => Display::fmt(i, fmt)?,
+      MaybeScheme::Scheme(s) => Display::fmt(s, fmt),
+      MaybeScheme::Inst(i) => Display::fmt(i, fmt),
     }
-
-    Ok(())
   }
 }

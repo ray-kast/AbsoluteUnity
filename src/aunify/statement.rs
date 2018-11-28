@@ -36,8 +36,6 @@ impl Display for Statement {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     Display::fmt(&self.0, fmt)?;
     fmt.write_str(" ⊢ ")?;
-    Display::fmt(&self.1, fmt)?;
-
-    Ok(())
+    Display::fmt(&self.1, fmt)
   }
 }

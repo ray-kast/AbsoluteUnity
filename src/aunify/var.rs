@@ -22,15 +22,13 @@ impl Display for Var {
     match self {
       Var::Formal(n) => {
         fmt.write_str("$")?;
-        Display::fmt(n, fmt)?;
+        Display::fmt(n, fmt)
       },
       Var::Auto(i) => {
         fmt.write_str("_")?;
-        Display::fmt(i, fmt)?;
+        Display::fmt(i, fmt)
       },
     }
-
-    Ok(())
   }
 }
 

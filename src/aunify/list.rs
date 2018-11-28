@@ -76,12 +76,10 @@ impl Display for List {
       List::Cons(h, t) => {
         Display::fmt(h, fmt)?;
         fmt.write_str(":")?;
-        Display::fmt(t, fmt)?;
+        Display::fmt(t, fmt)
       },
-      List::Nil => fmt.write_str("[]")?,
+      List::Nil => fmt.write_str("[]"),
     }
-
-    Ok(())
   }
 }
 
@@ -167,10 +165,8 @@ impl IntoTrace for Tail {
 impl Display for Tail {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      Tail::Open(v) => Display::fmt(v, fmt)?,
-      Tail::Close(l) => Display::fmt(l, fmt)?,
+      Tail::Open(v) => Display::fmt(v, fmt),
+      Tail::Close(l) => Display::fmt(l, fmt),
     }
-
-    Ok(())
   }
 }

@@ -4,7 +4,7 @@ use super::prelude::*;
 pub enum Value {
   Var(Var),
   Atom(String),
-  Tuple(Tuple), // TODO: make tuples into their own type
+  Tuple(Tuple),
   List(Box<List>),
 }
 
@@ -93,16 +93,14 @@ impl IntoTrace for Value {
 impl Display for Value {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      Value::Var(v) => Display::fmt(v, fmt)?,
+      Value::Var(v) => Display::fmt(v, fmt),
       Value::Atom(a) => {
         fmt.write_str("｢")?;
         Display::fmt(a, fmt)?;
-        fmt.write_str("｣")?;
+        fmt.write_str("｣")
       },
-      Value::Tuple(t) => Display::fmt(t, fmt)?,
-      Value::List(l) => Display::fmt(l, fmt)?,
+      Value::Tuple(t) => Display::fmt(t, fmt),
+      Value::List(l) => Display::fmt(l, fmt),
     }
-
-    Ok(())
   }
 }

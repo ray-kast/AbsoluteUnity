@@ -17,13 +17,10 @@ impl Display for Pred {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     Display::fmt(&self.0, fmt)?;
     fmt.write_str("/")?;
-    Display::fmt(&self.1, fmt)?;
-
-    Ok(())
+    Display::fmt(&self.1, fmt)
   }
 }
 
-// TODO: this should really just use a tuple
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct App(RcPred, Tuple);
 
@@ -66,7 +63,6 @@ impl IntoTrace for App {
 impl Display for App {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     Display::fmt(&self.0 .0, fmt)?;
-    Display::fmt(&self.1, fmt)?;
-    Ok(())
+    Display::fmt(&self.1, fmt)
   }
 }

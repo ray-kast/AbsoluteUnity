@@ -36,6 +36,11 @@ error_chain! {
   foreign_links {}
 
   errors {
+    DuplicateSub {
+      description("duplicate variable in substitution")
+      display("duplicate variable in substitution")
+    }
+
     SubBadType(expect: &'static str, got: Value) {
       description("substitution failure: bad type")
       display("substitution failure: expected {}, got {}", expect, got)

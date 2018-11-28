@@ -85,8 +85,7 @@ fn app() {
     App::new(Pred::new_rc("boi".into(), 0), Tuple(vec![]))
   );
 
-  // TODO: did someone say higher-order predicates?
-  //       (Note: this fails because predicate names must be valid atoms)
+  // This fails because predicate names must be valid atoms
   assert!(parser.parse(&mut tag, "Cat(dog)").is_err());
 }
 

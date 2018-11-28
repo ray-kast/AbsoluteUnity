@@ -71,9 +71,9 @@ impl<'a> Reader<'a> {
     }
   }
 
-  pub fn read_input<N: AsRef<str>>(
+  pub fn read_input<N: AsRef<str> + ?Sized>(
     &mut self,
-    name: N,
+    name: &N,
     input: &str,
   ) -> Option<InputAst> {
     match self.input_parser.parse(&mut self.parser_tag, input) {

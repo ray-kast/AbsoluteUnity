@@ -75,7 +75,7 @@ fn main() {
 
   if let Some(inputs) = matches.values_of("inputs") {
     for input in inputs {
-      fn read_file<P: AsRef<Path>>(path: P) -> io::Result<String> {
+      fn read_file<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<String> {
         let mut file = File::open(path)?;
 
         let mut s = String::new();

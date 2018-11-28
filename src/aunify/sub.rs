@@ -1,6 +1,6 @@
 use super::prelude::*;
 
-#[derive(Clone, PartialEq, Debug)] // TODO: can this safely derive Eq?
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Sub(HashMap<Var, Value>);
 
 impl Sub {
@@ -9,10 +9,10 @@ impl Sub {
 
   pub fn with(mut self, var: Var, is: Value) -> Result<Self> {
     if self.0.insert(var, is).is_some() {
-      panic!("duplicate substitution"); // TODO: this is bad
+      Err(ErrorKind::DuplicateSub.into())
+    } else {
+      Ok(self)
     }
-
-    Ok(self)
   }
 
   pub fn relevant_to<T: Thing>(mut self, t: &T) -> Self {
@@ -68,7 +68,7 @@ impl Display for Sub {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     if self.0.is_empty() {
       // An empty Sub implies top
-      fmt.write_str("⊤")?;
+      fmt.write_str("⊤")
     } else {
       let mut first = true;
 
@@ -85,8 +85,8 @@ impl Display for Sub {
 
         Display::fmt(is, fmt)?;
       }
-    }
 
-    Ok(())
+      Ok(())
+    }
   }
 }

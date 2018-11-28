@@ -62,8 +62,6 @@ impl Display for Tuple {
       Display::fmt(val, fmt)?;
     }
 
-    fmt.write_str(")")?;
-
-    Ok(())
+    fmt.write_str(")")
   }
 }

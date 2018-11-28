@@ -58,6 +58,10 @@ impl Thing for Sub {
 
     Ok(self)
   }
+
+  fn can_sub(&self, sub: &Sub) -> bool {
+    self.0.values().all(|v| v.can_sub(sub))
+  }
 }
 
 impl Display for Sub {

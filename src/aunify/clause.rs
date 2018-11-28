@@ -85,6 +85,19 @@ impl Thing for Clause {
       Or(a, b) => Or(Box::new(a.sub(sub)?), Box::new(b.sub(sub)?)),
     })
   }
+
+  fn can_sub(&self, sub: &Sub) -> bool {
+    use self::Clause::*;
+
+    match self {
+      Top => true,
+      Bot => true,
+      App(a) => a.can_sub(sub),
+      Not(c) => c.can_sub(sub),
+      And(a, b) => a.can_sub(sub) && b.can_sub(sub),
+      Or(a, b) => a.can_sub(sub) && b.can_sub(sub),
+    }
+  }
 }
 
 impl Display for Clause {

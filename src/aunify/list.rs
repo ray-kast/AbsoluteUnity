@@ -31,6 +31,15 @@ impl Thing for List {
       Nil => Nil,
     })
   }
+
+  fn can_sub(&self, sub: &Sub) -> bool {
+    use self::List::*;
+
+    match self {
+      Cons(h, t) => h.can_sub(sub) && t.can_sub(sub),
+      Nil => true,
+    }
+  }
 }
 
 impl Unify for List {
@@ -97,6 +106,19 @@ impl Thing for Tail {
       },
       Close(l) => Close(Box::new(l.sub(sub)?)),
     })
+  }
+
+  fn can_sub(&self, sub: &Sub) -> bool {
+    use self::Tail::*;
+
+    match self {
+      Open(v) => sub.get(v).map_or(true, |v| match v {
+        Value::Var(_) => true,
+        Value::List(_) => true,
+        _ => false,
+      }),
+      Close(l) => l.can_sub(sub),
+    }
   }
 }
 

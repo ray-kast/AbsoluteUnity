@@ -30,6 +30,17 @@ impl Thing for Value {
       List(l) => List(Box::new(l.sub(sub)?)),
     })
   }
+
+  fn can_sub(&self, sub: &Sub) -> bool {
+    use self::Value::*;
+
+    match self {
+      Var(_) => true,
+      Atom(_) => true,
+      Tuple(t) => t.can_sub(sub),
+      List(l) => l.can_sub(sub),
+    }
+  }
 }
 
 impl Unify for Value {

@@ -32,6 +32,8 @@ pub trait Thing {
 
     Ok(())
   }
+
+  fn can_sub(&self, sub: &Sub) -> bool;
 }
 
 pub trait Unify {

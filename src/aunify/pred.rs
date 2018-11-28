@@ -43,6 +43,8 @@ impl Thing for App {
   }
 
   fn sub(self, sub: &Sub) -> Result<Self> { Ok(App(self.0, self.1.sub(sub)?)) }
+
+  fn can_sub(&self, sub: &Sub) -> bool { self.1.can_sub(sub) }
 }
 
 impl Unify for App {

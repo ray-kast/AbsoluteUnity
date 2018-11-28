@@ -43,7 +43,11 @@ impl Env {
               Box::new(self.solve_clause_impl(rhs, src, trace.clone()))
             {
               if let Ok(ret) = sub.clone().sub(&sub2) {
-                yield ret.relevant_to(&app);
+                let ret = ret.relevant_to(&app);
+
+                if app.can_sub(&ret) {
+                  yield ret;
+                }
               }
             }
           },

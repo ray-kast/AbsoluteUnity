@@ -26,6 +26,10 @@ impl Thing for Statement {
   fn sub(self, sub: &Sub) -> Result<Self> {
     Ok(Statement(self.0.sub(sub)?, self.1.sub(sub)?))
   }
+
+  fn can_sub(&self, sub: &Sub) -> bool {
+    self.0.can_sub(sub) && self.1.can_sub(sub)
+  }
 }
 
 impl Display for Statement {

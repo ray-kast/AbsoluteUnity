@@ -19,6 +19,8 @@ impl Thing for Tuple {
         .collect::<Result<_>>()?,
     ))
   }
+
+  fn can_sub(&self, sub: &Sub) -> bool { self.0.iter().all(|l| l.can_sub(sub)) }
 }
 
 impl Unify for Tuple {

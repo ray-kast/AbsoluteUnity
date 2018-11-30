@@ -24,7 +24,7 @@ AutoScheme<T>: AutoScheme<T> = T => AutoScheme(<>);
 SchemePrefix<T>: SchemePrefix<T> = {
   // TODO: this just ignores duplicate names
   "<" <CommaList<NamedVar>> ">" <T> => SchemePrefix::Specific(<>),
-  "<" ">" <T> => SchemePrefix::All(<>),
+  "<" ".." ">" <T> => SchemePrefix::All(<>),
   T => SchemePrefix::Inst(<>),
 };
 

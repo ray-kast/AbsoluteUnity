@@ -11,3 +11,5 @@ shift(X:A, X, A).
 
 contains(X:_, X).
 contains(_:A, X) :- contains(A, X).
+
+eq(X, X).

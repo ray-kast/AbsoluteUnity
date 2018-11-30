@@ -7,6 +7,7 @@ pub mod clause;
 pub mod env;
 pub mod gen_iter;
 pub mod list;
+pub mod numeric;
 pub mod pred;
 pub mod scheme;
 pub mod statement;
@@ -20,6 +21,7 @@ pub use self::{
   clause::Clause,
   env::Env,
   list::List,
+  numeric::Numeric,
   pred::{App, Pred, RcPred},
   scheme::{MaybeScheme, Scheme},
   statement::Statement,
@@ -53,15 +55,21 @@ error_chain! {
     }
 
     // TODO: add some kind of traceback?
-    BadListUnify(a: List, b: List) {
-      description("lists couldn't be unified")
-      display("lists {} and {} couldn't be unified", a, b)
+    BadNumericUnify(a: Numeric, b: Numeric) {
+      description("numeric expressions couldn't be unified")
+      display("numeric expressions {} and {} couldn't be unified", a, b)
     }
 
     // TODO: add some kind of traceback?
     BadTupleUnify(a: Tuple, b: Tuple) {
       description("tuples couldn't be unified")
       display("tuples {} and {} couldn't be unified", a, b)
+    }
+
+    // TODO: add some kind of traceback?
+    BadListUnify(a: List, b: List) {
+      description("lists couldn't be unified")
+      display("lists {} and {} couldn't be unified", a, b)
     }
 
     PredMismatch(a: RcPred, b: RcPred) {

@@ -4,7 +4,8 @@ use super::prelude::*;
 pub enum Value {
   Var(Var),
   Atom(String),
-  Tuple(Tuple),
+  Numeric(Numeric),
+  Tuple(Tuple), // TODO: handle unification of 1-tuples with values
   List(Box<List>),
 }
 
@@ -15,6 +16,7 @@ impl Thing for Value {
         set.insert(v.clone());
       },
       Value::Atom(_) => {},
+      Value::Numeric(n) => n.collect_free_vars(set),
       Value::Tuple(t) => t.collect_free_vars(set),
       Value::List(l) => l.collect_free_vars(set),
     }
@@ -26,6 +28,7 @@ impl Thing for Value {
     Ok(match self {
       Var(v) => sub.get(&v).map_or(Var(v), |l| l.clone()),
       Atom(a) => Atom(a),
+      Numeric(n) => Numeric(n.sub(sub)?),
       Tuple(t) => Tuple(t.sub(sub)?),
       List(l) => List(Box::new(l.sub(sub)?)),
     })
@@ -37,6 +40,7 @@ impl Thing for Value {
     match self {
       Var(_) => true,
       Atom(_) => true,
+      Numeric(n) => n.can_sub(sub),
       Tuple(t) => t.can_sub(sub),
       List(l) => l.can_sub(sub),
     }
@@ -70,6 +74,7 @@ impl Unify for Value {
         }
       },
       (Atom(a), Atom(b)) if a == b => Ok(Sub::top()),
+      (Numeric(a), Numeric(b)) => a.unify(b),
       (Tuple(a), Tuple(b)) => a.unify(b),
       (List(a), List(b)) => a.unify(b),
       _ => Err(ErrorKind::BadValueUnify(self.clone(), rhs.clone()).into()),
@@ -84,6 +89,7 @@ impl IntoTrace for Value {
     match self {
       Var(v) => Var(v.into_trace()),
       Atom(a) => Atom(a),
+      Numeric(n) => Numeric(n.into_trace()),
       Tuple(t) => Tuple(t.into_trace()),
       List(l) => List(Box::new(l.into_trace())),
     }
@@ -99,6 +105,7 @@ impl Display for Value {
         Display::fmt(a, fmt)?;
         fmt.write_str("｣")
       },
+      Value::Numeric(n) => Display::fmt(n, fmt),
       Value::Tuple(t) => Display::fmt(t, fmt),
       Value::List(l) => Display::fmt(l, fmt),
     }

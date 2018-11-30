@@ -26,7 +26,7 @@ impl<'a> Reader<'a> {
       editor: Editor::new(),
       parser: ExprParser::new(),
       input_parser: InputParser::new(),
-      parser_tag: ParserTag::new(),
+      parser_tag: ParserTag,
     };
 
     let _ = ret.editor.load_history(ret.histfile);

@@ -1,4 +1,5 @@
 use crate::ast::*;
+use std::str::FromStr;
 
 grammar(tag: &mut ParserTag);
 
@@ -16,46 +17,45 @@ CommaList<T>: Vec<T> = {
   },
 };
 
-CommaListOpt<T>: Vec<T> = { => Vec::new(), CommaList<T> };
+CommaListOpt<T>: Vec<T> = { ","? => Vec::new(), CommaList<T> };
 
-MaybeScheme<T>: MaybeScheme<T> = {
-  <t:T> => MaybeScheme::generalize(t),
-};
+AutoScheme<T>: AutoScheme<T> = T => AutoScheme(<>);
 
-ExplicitMaybeScheme<T>: MaybeScheme<T> = {
+SchemePrefix<T>: SchemePrefix<T> = {
   // TODO: this just ignores duplicate names
-  "[" <on:CommaList<Var>> "]" <t:T> => MaybeScheme::Scheme(Scheme::generalize(t, on.into_iter().collect())),
-  "[" "]" <t:T> => MaybeScheme::generalize(t),
-  T => MaybeScheme::Inst(<>),
+  "<" <CommaList<NamedVar>> ">" <T> => SchemePrefix::Specific(<>),
+  "<" ">" <T> => SchemePrefix::All(<>),
+  T => SchemePrefix::Inst(<>),
 };
 
 // Nonterminals
 
 pub Expr: Expr = {
-  Input => Expr::Assert(<>.0),
+  Assert => Expr::Assert(<>),
   <Clause> "?" => Expr::Query(<>),
-  <ExplicitMaybeScheme<Value>> "<>" <ExplicitMaybeScheme<Value>> => Expr::UnifyVal(<>),
-  <ExplicitMaybeScheme<App>> "<>" <ExplicitMaybeScheme<App>> => Expr::UnifyApp(<>),
-  "#" <ExplicitMaybeScheme<Value>> => Expr::PrintVal(<>),
-  "#" <ExplicitMaybeScheme<Statement>> => Expr::PrintStmt(<>),
+  <SchemePrefix<Value>> "<>" <SchemePrefix<Value>> => Expr::UnifyVal(<>),
+  <SchemePrefix<App>> "<>" <SchemePrefix<App>> => Expr::UnifyApp(<>),
+  "/p" <SchemePrefix<Value>> => Expr::PrintVal(<>),
+  "/p" <SchemePrefix<Statement>> => Expr::PrintStmt(<>),
+  "/f" <Value> => Expr::Fold(<>),
   "/e" => Expr::PrintEnv,
   "/r" => Expr::Reset,
 };
 
-pub Input: Input = {
-  (<MaybeScheme<Statement>> ".")+ => Input(<>),
-}
+pub Input: Input = Assert => Input(<>);
+
+pub Assert: Assert = (<AutoScheme<Statement>> ".")+ => Assert(<>);
 
 pub Statement: Statement = {
-  <App> r":-|⊢" <Clause> => Statement::new(<>),
-  <App> => Statement::fact(<>),
+  <App> r":-|⊢" <Clause> => Statement::Cond(<>),
+  <App> => Statement::Fact(<>),
 };
 
-pub Clause: Clause = OrClause;
+pub Clause = OrClause;
 
 OrClause: Clause = {
   <l:OrClause> ";" <r:AndClause> => Clause::Or(Box::new(l), Box::new(r)),
-  AndClause
+  AndClause,
 };
 
 AndClause: Clause = {
@@ -66,35 +66,71 @@ AndClause: Clause = {
 UnaryClause: Clause = {
   r"~|¬" <UnaryClause> => Clause::Not(Box::new(<>)),
   PrimClause,
-}
+};
 
 PrimClause: Clause = {
   App => Clause::App(<>),
   r":top|⊤" => Clause::Top,
   r":bot|⊥" => Clause::Bot,
   "(" <Clause> ")",
-}
-
-pub App: App = <Atom> "(" <CommaListOpt<Value>> ")" => tag.make_app(<>);
-
-pub Value: Value = ListValue;
-
-ListValue: Value = {
-  List => Value::List(Box::new(<>)),
-  TupleValue,
 };
 
-pub List: List = {
-  <h:TupleValue> ":" "[" <v:Var> "]" => List::Cons(h, Tail::Open(v)),
-  <h:TupleValue> ":" <l:List> => List::Cons(h, Tail::Close(Box::new(l))),
-  "[" "]" => List::Nil,
+pub App: App = Atom Tuple => App(<>);
+
+pub Value = ListValue;
+
+ListValue: Value = {
+  <l:AddValue> ":" <r:ListValue> => Value::List(Box::new(l), Box::new(r)),
+  AddValue,
+};
+
+AddValue: Value = {
+  <l:AddValue> "+" <r:SubValue> => Value::Binop(BinaryOp::Add, Box::new(l), Box::new(r)),
+  SubValue,
+};
+
+SubValue: Value = {
+  <l:SubValue> "-" <r:MulValue> => Value::Binop(BinaryOp::Sub, Box::new(l), Box::new(r)),
+  MulValue,
+};
+
+MulValue: Value = {
+  <l:MulValue> "*" <r:DivValue> => Value::Binop(BinaryOp::Mul, Box::new(l), Box::new(r)),
+  DivValue,
+};
+
+DivValue: Value = {
+  <l:DivValue> "/" <r:ModValue> => Value::Binop(BinaryOp::Div, Box::new(l), Box::new(r)),
+  ModValue,
+};
+
+ModValue: Value = {
+  <l:ModValue> "%" <r:UnaryValue> => Value::Binop(BinaryOp::Mod, Box::new(l), Box::new(r)),
+  UnaryValue,
+};
+
+UnaryValue: Value = {
+  "+" <UnaryValue> => Value::Unop(UnaryOp::Pos, Box::new(<>)),
+  "-" <UnaryValue> => Value::Unop(UnaryOp::Neg, Box::new(<>)),
+  PrimValue,
 }
 
-TupleValue: Value = {
+PrimValue: Value = {
   Var => Value::Var(<>),
   Atom => Value::Atom(<>),
-  "(" <CommaList<Value>> ")" => Value::Tuple(Tuple(<>)),
-}
+  i32 => Value::Int(<>),
+  Tuple => Value::Tuple(<>),
+  "[" "]" => Value::EmptyList,
+};
 
-Var: Var = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => Var::Formal(<>.into());
-Atom: String = r"[\p{Ll}\p{N}][\p{L}\p{N}]*" => <>.into();
+pub Var: Var = {
+  NamedVar => Var::Named(<>),
+  "_" => Var::Anon,
+};
+
+pub Tuple: Tuple = "(" <CommaListOpt<Value>> ")" => Tuple(<>);
+
+NamedVar: NamedVar = r"[\p{Lu}\p{Lt}][\p{L}\p{N}]*" => NamedVar(<>.into());
+Atom: Atom = r"\p{Ll}[\p{L}\p{N}]*" => Atom(<>.into());
+// TODO: this is potentially bad
+i32: i32 = r"[0-9]+" => i32::from_str(<>).unwrap();

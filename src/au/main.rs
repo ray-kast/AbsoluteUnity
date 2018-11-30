@@ -1,7 +1,13 @@
+#![feature(try_from, bind_by_move_pattern_guards)]
+
 #[macro_use]
 extern crate lalrpop_util;
 
+#[macro_use]
+extern crate error_chain; // TODO: this should be able to be removed, somehow
+
 mod ast;
+mod error;
 mod eval;
 mod read;
 
@@ -9,6 +15,13 @@ lalrpop_mod!(pub parser);
 
 #[cfg(test)]
 mod tests;
+
+pub use self::error::*;
+
+mod prelude {
+  pub use super::*;
+  pub use std::convert::TryInto;
+}
 
 use crate::{
   eval::{EvalResult, Evaluator},
@@ -22,41 +35,46 @@ use std::{
   path::Path,
 };
 
-fn print(res: EvalResult) {
+fn print(res: Result<EvalResult>) {
   use self::EvalResult::*;
 
   match res {
-    Unit => {},
-    Assert(v) => {
-      for stmt in v {
-        println!(" {}.", stmt);
-      }
-    },
-    Query(i) => {
-      for sol in i {
-        println!(" {};", sol); // TODO: lazy-evaluate this
-      }
+    Ok(r) => match r {
+      Unit => {},
+      Assert(v) => {
+        for stmt in v {
+          println!(" {}.", stmt);
+        }
+      },
+      Query(i) => {
+        for sol in i {
+          println!(" {};", sol); // TODO: lazy-evaluate this
+        }
 
-      println!(" ⊥.");
+        println!(" ⊥.");
+      },
+      UnifyVal(Ok((a, b, sub, a2, b2))) => {
+        println!(" unify result: {}", sub);
+        println!("     lhs: {} ~ {}", a, a2);
+        println!("     rhs: {} ~ {}", b, b2);
+      },
+      UnifyVal(Err(e)) => println!(" unify failed: {}", e),
+      UnifyApp(Ok((a, b, sub, a2, b2))) => {
+        println!(" unify result: {}", sub);
+        println!("     lhs: {} ~ {}", a, a2);
+        println!("     rhs: {} ~ {}", b, b2);
+      },
+      UnifyApp(Err(e)) => println!(" unify failed: {}", e),
+      PrintVal(v) => println!(" {}", v),
+      PrintStmt(s) => println!(" {}", s),
+      PrintEnv(v) => {
+        for premise in v {
+          println!(" {}", premise);
+        }
+      },
     },
-    UnifyVal(Ok((a, b, sub, a2, b2))) => {
-      println!(" unify result: {}", sub);
-      println!("     lhs: {} ~ {}", a, a2);
-      println!("     rhs: {} ~ {}", b, b2);
-    },
-    UnifyVal(Err(e)) => println!(" unify failed: {}", e),
-    UnifyApp(Ok((a, b, sub, a2, b2))) => {
-      println!(" unify result: {}", sub);
-      println!("     lhs: {} ~ {}", a, a2);
-      println!("     rhs: {} ~ {}", b, b2);
-    },
-    UnifyApp(Err(e)) => println!(" unify failed: {}", e),
-    PrintVal(v) => println!(" {}", v),
-    PrintStmt(s) => println!(" {}", s),
-    PrintEnv(v) => {
-      for premise in v {
-        println!(" {}", premise);
-      }
+    Err(e) => {
+      println!(" compile error: {}", e);
     },
   }
 }
@@ -88,7 +106,10 @@ fn main() {
       match read_file(input) {
         Ok(s) => {
           if let Some(i) = reader.read_input(input, &s) {
-            evalr.eval_input(i);
+            match evalr.eval_input(i) {
+              Ok(()) => {},
+              Err(e) => println!("failed to compile {}: {}", input, e),
+            }
           }
         },
         Err(e) => println!("failed to read {}: {}", input, e),

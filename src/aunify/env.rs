@@ -1,6 +1,7 @@
 use super::prelude::{gen_iter::GenIter, *};
 use std::{cell::RefCell, rc::Rc};
 
+// TODO: this could be accelerated by collecting statements on their LHS predicate
 pub struct Env(Vec<MaybeScheme<Statement>>);
 
 pub trait IntoTrace {

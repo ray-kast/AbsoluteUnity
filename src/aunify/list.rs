@@ -100,7 +100,7 @@ impl Thing for Tail {
       Open(v) => match sub.get(&v).map_or(Value::Var(v), |v| v.clone()) {
         Value::Var(v) => Open(v),
         Value::List(l) => Close(Box::new(l.sub(sub)?)),
-        v => return Err(ErrorKind::SubBadType("Tail", v.clone()).into()),
+        v => return Err(ErrorKind::SubBadType("Tail", v).into()),
       },
       Close(l) => Close(Box::new(l.sub(sub)?)),
     })

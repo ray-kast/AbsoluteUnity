@@ -1,19 +1,19 @@
 use super::prelude::*;
 use aunify::{self as a, MaybeScheme, Pred, RcPred, Scheme, Thing, VarSource};
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 pub use aunify::numeric::{BinaryOp, UnaryOp};
 
 pub struct CompileCtx {
   pred_map: HashMap<(String, usize), RcPred>,
-  var_src: VarSource,
+  var_src: Rc<VarSource>,
 }
 
 impl CompileCtx {
-  pub fn new() -> Self {
+  pub fn new(var_src: Rc<VarSource>) -> Self {
     Self {
       pred_map: HashMap::new(),
-      var_src: VarSource::new(),
+      var_src,
     }
   }
 

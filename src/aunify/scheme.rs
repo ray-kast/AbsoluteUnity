@@ -121,11 +121,7 @@ impl<T: Thing + Clone> MaybeScheme<T> {
 }
 
 impl<T: Thing + Unify> MaybeScheme<T> {
-  pub fn unify_inst(
-    &mut self,
-    rhs: &mut Self,
-    src: &VarSource,
-  ) -> Result<Sub> {
+  pub fn unify_inst(&mut self, rhs: &mut Self, src: &VarSource) -> Result<Sub> {
     let a = self.to_inst(src)?;
     let b = rhs.to_inst(src)?;
 

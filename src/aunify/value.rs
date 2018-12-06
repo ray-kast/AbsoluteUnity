@@ -82,20 +82,6 @@ impl Unify for Value {
   }
 }
 
-impl IntoTrace for Value {
-  fn into_trace(self) -> Self {
-    use self::Value::*;
-
-    match self {
-      Var(v) => Var(v.into_trace()),
-      Atom(a) => Atom(a),
-      Numeric(n) => Numeric(n.into_trace()),
-      Tuple(t) => Tuple(t.into_trace()),
-      List(l) => List(Box::new(l.into_trace())),
-    }
-  }
-}
-
 impl Display for Value {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     match self {

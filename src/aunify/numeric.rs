@@ -205,21 +205,6 @@ impl Unify for Numeric {
   }
 }
 
-impl IntoTrace for Numeric {
-  fn into_trace(self) -> Self {
-    use self::Numeric::*;
-
-    match self {
-      Var(v) => Var(v.into_trace()),
-      Int(i) => Int(i),
-      Unop(o, n) => Unop(o, Box::new(n.into_trace())),
-      Binop(o, a, b) => {
-        Binop(o, Box::new(a.into_trace()), Box::new(b.into_trace()))
-      },
-    }
-  }
-}
-
 impl Display for Numeric {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     self.disp_prec(0, fmt)

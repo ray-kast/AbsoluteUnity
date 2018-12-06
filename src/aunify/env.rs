@@ -1,12 +1,7 @@
 use super::{gen_iter::GenIter, prelude::*, tracer::prelude::*};
-use std::{cell::RefCell, rc::Rc};
 
 // TODO: this could be accelerated by collecting statements on their LHS predicate
 pub struct Env(Vec<MaybeScheme<Statement>>);
-
-pub trait IntoTrace {
-  fn into_trace(self) -> Self;
-}
 
 impl Env {
   pub fn new() -> Self { Env(Vec::new()) }
@@ -20,18 +15,10 @@ impl Env {
     &'a self,
     app: App,
     src: &'a VarSource,
-    trace: Rc<RefCell<HashSet<App>>>,
     tracer: T,
   ) -> impl Iterator<Item = Sub> + 'a {
     GenIter(move || {
       let tracer = tracer.begin_solve_app(&app);
-
-      let key = app.clone().into_trace();
-
-      if !trace.borrow_mut().insert(key.clone()) {
-        tracer.drop_key();
-        return;
-      }
 
       // TODO: clean this up, this is very messy
       // TODO: short-circuit this
@@ -61,7 +48,6 @@ impl Env {
                 for sub2 in Box::new(self.solve_clause_impl(
                   rhs,
                   src,
-                  trace.clone(),
                   unify_tracer.clone(),
                 )) {
                   if let Ok(ret) = sub.clone().sub(&sub2) {
@@ -79,8 +65,6 @@ impl Env {
           Err(_) => {},
         }
       }
-
-      trace.borrow_mut().remove(&key);
     })
   }
 
@@ -90,14 +74,13 @@ impl Env {
     src: &'a VarSource,
     tracer: T,
   ) -> impl Iterator<Item = Sub> + 'a {
-    self.solve_app_impl(app, src, Rc::new(RefCell::new(HashSet::new())), tracer)
+    self.solve_app_impl(app, src, tracer)
   }
 
   fn solve_clause_impl<'a, T: Tracer + 'a>(
     &'a self,
     clause: Clause,
     src: &'a VarSource,
-    trace: Rc<RefCell<HashSet<App>>>,
     tracer: T,
   ) -> impl Iterator<Item = Sub> + 'a {
     // TODO: implement short-circuiting for And and Or?
@@ -109,36 +92,26 @@ impl Env {
         Clause::Top => yield Sub::top(),
         Clause::Bot => {},
         Clause::App(a) => {
-          for sol in self.solve_app_impl(a, src, trace.clone(), tracer) {
+          for sol in self.solve_app_impl(a, src, tracer) {
             yield sol;
           }
         },
         Clause::Not(c) => {
           // TODO: maybe have some kind of non-constructive constraint system?
 
-          match Box::new(self.solve_clause_impl(*c, src, trace.clone(), tracer))
-            .next()
-          {
+          match Box::new(self.solve_clause_impl(*c, src, tracer)).next() {
             Some(_) => {},
             None => yield Sub::top(),
           }
         },
         Clause::And(a, b) => {
-          for sub in Box::new(self.solve_clause_impl(
-            *a,
-            src,
-            trace.clone(),
-            tracer.clone(),
-          )) {
+          for sub in Box::new(self.solve_clause_impl(*a, src, tracer.clone())) {
             // TODO: this is gonna result in a lot of cloning...
             match b.clone().sub(&sub) {
               Ok(b) => {
-                for sub2 in Box::new(self.solve_clause_impl(
-                  b,
-                  src,
-                  trace.clone(),
-                  tracer.clone(),
-                )) {
+                for sub2 in
+                  Box::new(self.solve_clause_impl(b, src, tracer.clone()))
+                {
                   match sub.clone().sub(&sub2) {
                     Ok(s) => yield s,
                     Err(_) => {},
@@ -150,18 +123,11 @@ impl Env {
           }
         },
         Clause::Or(a, b) => {
-          for sol in Box::new(self.solve_clause_impl(
-            *a,
-            src,
-            trace.clone(),
-            tracer.clone(),
-          )) {
+          for sol in Box::new(self.solve_clause_impl(*a, src, tracer.clone())) {
             yield sol;
           }
 
-          for sol in
-            Box::new(self.solve_clause_impl(*b, src, trace.clone(), tracer))
-          {
+          for sol in Box::new(self.solve_clause_impl(*b, src, tracer)) {
             yield sol;
           }
         },
@@ -175,11 +141,6 @@ impl Env {
     src: &'a VarSource,
     tracer: T,
   ) -> impl Iterator<Item = Sub> + 'a {
-    self.solve_clause_impl(
-      clause,
-      src,
-      Rc::new(RefCell::new(HashSet::new())),
-      tracer,
-    )
+    self.solve_clause_impl(clause, src, tracer)
   }
 }

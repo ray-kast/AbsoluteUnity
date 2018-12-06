@@ -90,7 +90,7 @@ error_chain! {
 mod tests;
 
 mod prelude {
-  pub use super::{env::IntoTrace, *};
+  pub use super::*;
   pub use std::{
     collections::{hash_map::Entry as HashEntry, HashMap, HashSet},
     fmt::{self, Display},

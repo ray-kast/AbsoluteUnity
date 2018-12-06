@@ -59,17 +59,6 @@ impl Unify for List {
   }
 }
 
-impl IntoTrace for List {
-  fn into_trace(self) -> Self {
-    use self::List::*;
-
-    match self {
-      Cons(h, t) => Cons(h.into_trace(), t.into_trace()),
-      Nil => Nil,
-    }
-  }
-}
-
 impl Display for List {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     match self {
@@ -147,17 +136,6 @@ impl Unify for Tail {
         }
       },
       (Close(a), Close(b)) => a.unify(&b),
-    }
-  }
-}
-
-impl IntoTrace for Tail {
-  fn into_trace(self) -> Self {
-    use self::Tail::*;
-
-    match self {
-      Open(v) => Open(v.into_trace()),
-      Close(l) => Close(Box::new(l.into_trace())),
     }
   }
 }

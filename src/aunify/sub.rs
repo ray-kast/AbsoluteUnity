@@ -23,6 +23,15 @@ impl Sub {
     self
   }
 
+  pub fn without_autos(mut self) -> Self {
+    self.0.retain(|k, _| match k {
+      Var::Formal(_) => true,
+      Var::Auto(_) => false,
+    });
+
+    self
+  }
+
   pub fn into_map(self) -> HashMap<Var, Value> { self.0 }
 
   pub fn get(&self, var: &Var) -> Option<&Value> { self.0.get(var) }

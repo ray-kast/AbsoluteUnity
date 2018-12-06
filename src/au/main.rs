@@ -1,4 +1,4 @@
-#![feature(try_from, bind_by_move_pattern_guards)]
+#![feature(try_from, bind_by_move_pattern_guards, label_break_value)]
 
 #[macro_use]
 extern crate lalrpop_util;
@@ -10,6 +10,7 @@ mod ast;
 mod error;
 mod eval;
 mod read;
+mod readch;
 mod tracer;
 
 lalrpop_mod!(pub parser);
@@ -27,17 +28,46 @@ mod prelude {
 use crate::{
   eval::{EvalResult, Evaluator},
   read::{ReadResult, Reader},
+  readch::Readch,
 };
 use aunify;
 use clap::{App, Arg};
 use std::{
   fs::File,
   io::{self, prelude::*},
+  os::unix::io::AsRawFd,
   path::Path,
 };
 
-fn print(res: Result<EvalResult>) {
+fn print(res: Result<EvalResult>, readch: &Readch) {
   use self::EvalResult::*;
+
+  enum QueryAction {
+    Next,
+    Stop,
+  }
+
+  fn query_action<P: Fn() -> Result<()>>(
+    readch: &Readch,
+    prompt: P,
+  ) -> Result<QueryAction> {
+    prompt()?;
+
+    Ok(loop {
+      match readch.read()? {
+        '\x03' => break QueryAction::Stop,
+        '\x04' => break QueryAction::Stop,
+        '\n' => break QueryAction::Stop,
+        '\t' => break QueryAction::Next,
+        '.' => break QueryAction::Stop,
+        ';' => break QueryAction::Next,
+        c => {
+          writeln!(io::stdout(), "\r\x1b[2K Invalid input {:?}.", c)?;
+          prompt()?;
+        },
+      }
+    })
+  }
 
   match res {
     Ok(r) => match r {
@@ -48,11 +78,30 @@ fn print(res: Result<EvalResult>) {
         }
       },
       Query(i) => {
-        for sol in i {
-          println!(" {};", sol); // TODO: lazy-evaluate this
-        }
+        let broken = 'unwrap: {
+          for sol in i {
+            let sol = sol.without_autos();
 
-        println!(" ⊥.");
+            match query_action(&readch, || {
+              write!(io::stdout(), " {}", sol)?;
+              io::stdout().flush()?;
+              Ok(())
+            })
+            .unwrap()
+            {
+              QueryAction::Next => writeln!(io::stdout(), ";").unwrap(),
+              QueryAction::Stop => break 'unwrap true,
+            }
+          }
+
+          false
+        };
+
+        if broken {
+          writeln!(io::stdout(), ".").unwrap();
+        } else {
+          writeln!(io::stdout(), " ⊥.").unwrap();
+        }
       },
       UnifyVal(Ok((a, b, sub, a2, b2))) => {
         println!(" unify result: {}", sub);
@@ -82,6 +131,8 @@ fn print(res: Result<EvalResult>) {
 
 fn main() {
   use self::ReadResult::*;
+
+  let readch = Readch::new(io::stdin().as_raw_fd()).unwrap();
 
   let mut reader = Reader::new(".au-history");
   let mut evalr = Evaluator::new();
@@ -121,7 +172,7 @@ fn main() {
   // TODO: re-read input files on Expr::Reset
   loop {
     match reader.read() {
-      Eval(a) => print(evalr.eval(a)),
+      Eval(a) => print(evalr.eval(a), &readch),
       Stop => break,
     }
   }

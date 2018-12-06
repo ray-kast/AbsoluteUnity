@@ -6,10 +6,11 @@ use crate::{
 use aunify::{
   App, Env, MaybeScheme, NilTracer, Statement, Sub, Thing, Value, VarSource,
 };
+use std::rc::Rc;
 
 pub struct Evaluator {
   env: Env,
-  var_src: VarSource,
+  var_src: Rc<VarSource>,
   compile_ctx: CompileCtx,
 }
 
@@ -26,10 +27,12 @@ pub enum EvalResult<'a> {
 
 impl Evaluator {
   pub fn new() -> Self {
+    let var_src = Rc::new(VarSource::new());
+
     Self {
       env: Env::new(),
-      var_src: VarSource::new(),
-      compile_ctx: CompileCtx::new(),
+      var_src: var_src.clone(),
+      compile_ctx: CompileCtx::new(var_src),
     }
   }
 

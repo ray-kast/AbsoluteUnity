@@ -40,12 +40,6 @@ impl Unify for Tuple {
   }
 }
 
-impl IntoTrace for Tuple {
-  fn into_trace(self) -> Self {
-    Tuple(self.0.into_iter().map(|v| v.into_trace()).collect())
-  }
-}
-
 impl Display for Tuple {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     fmt.write_str("(")?;

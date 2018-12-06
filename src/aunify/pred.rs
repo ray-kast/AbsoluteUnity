@@ -58,10 +58,6 @@ impl Unify for App {
   }
 }
 
-impl IntoTrace for App {
-  fn into_trace(self) -> Self { App(self.0, self.1.into_trace()) }
-}
-
 impl Display for App {
   fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     Display::fmt(&self.0 .0, fmt)?;

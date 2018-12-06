@@ -12,4 +12,7 @@ shift(X:A, X, A).
 contains(X:_, X).
 contains(_:A, X) :- contains(A, X).
 
+indexOf(X:_, X, 0).
+indexOf(_:A, X, I) :- indexOf(A, X, J), eq(I, J + 1).
+
 eq(X, X).

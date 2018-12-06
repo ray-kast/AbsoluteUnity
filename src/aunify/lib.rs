@@ -13,6 +13,7 @@ pub mod scheme;
 pub mod statement;
 pub mod sub;
 pub mod thing;
+pub mod tracer;
 pub mod tuple;
 pub mod value;
 pub mod var;
@@ -27,6 +28,7 @@ pub use self::{
   statement::Statement,
   sub::Sub,
   thing::{Thing, Unify},
+  tracer::NilTracer,
   tuple::Tuple,
   value::Value,
   var::{Var, VarSource},

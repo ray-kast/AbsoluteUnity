@@ -1,6 +1,11 @@
 use super::prelude::*; // TODO: replace super::prelude with crate::prelude
-use crate::ast::{Command, CompileCtx, CompileTo, Expr, Input};
-use aunify::{App, Env, MaybeScheme, Statement, Sub, Thing, Value, VarSource};
+use crate::{
+  ast::{Command, CompileCtx, CompileTo, Expr, Input},
+  tracer::AuTracer,
+};
+use aunify::{
+  App, Env, MaybeScheme, NilTracer, Statement, Sub, Thing, Value, VarSource,
+};
 
 pub struct Evaluator {
   env: Env,
@@ -37,9 +42,11 @@ impl Evaluator {
 
         EvalResult::Assert(v)
       },
-      Command::Query(c) => {
-        EvalResult::Query(Box::new(self.env.solve_clause(c, &mut self.var_src)))
-      },
+      Command::Query(c) => EvalResult::Query(Box::new(self.env.solve_clause(
+        c,
+        &mut self.var_src,
+        NilTracer,
+      ))),
       Command::UnifyVal(a, b) => EvalResult::UnifyVal(
         a.inst_and_unify(b, &mut self.var_src)
           .and_then(|(a, b, sub)| {
@@ -62,6 +69,9 @@ impl Evaluator {
             Ok((a1, b1, sub, a2, b2))
           }),
       ),
+      Command::TraceQuery(c) => EvalResult::Query(Box::new(
+        self.env.solve_clause(c, &mut self.var_src, AuTracer::new()),
+      )),
       Command::PrintVal(v) => EvalResult::PrintVal(v),
       Command::PrintStmt(s) => EvalResult::PrintStmt(s),
       Command::Fold(mut n) => {

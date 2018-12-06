@@ -35,6 +35,7 @@ pub Expr: Expr = {
   <Clause> "?" => Expr::Query(<>),
   <SchemePrefix<Value>> "<>" <SchemePrefix<Value>> => Expr::UnifyVal(<>),
   <SchemePrefix<App>> "<>" <SchemePrefix<App>> => Expr::UnifyApp(<>),
+  "/t" <Clause> "?" => Expr::TraceQuery(<>),
   "/p" <SchemePrefix<Value>> => Expr::PrintVal(<>),
   "/p" <SchemePrefix<Statement>> => Expr::PrintStmt(<>),
   "/f" <Value> => Expr::Fold(<>),

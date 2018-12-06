@@ -43,6 +43,7 @@ pub enum Command {
   Query(a::Clause),
   UnifyVal(MaybeScheme<a::Value>, MaybeScheme<a::Value>),
   UnifyApp(MaybeScheme<a::App>, MaybeScheme<a::App>),
+  TraceQuery(a::Clause),
   PrintVal(MaybeScheme<a::Value>),
   PrintStmt(MaybeScheme<a::Statement>),
   Fold(a::Numeric),
@@ -56,6 +57,7 @@ pub enum Expr {
   Query(Clause),
   UnifyVal(SchemePrefix<Value>, SchemePrefix<Value>),
   UnifyApp(SchemePrefix<App>, SchemePrefix<App>),
+  TraceQuery(Clause),
   PrintVal(SchemePrefix<Value>),
   PrintStmt(SchemePrefix<Statement>),
   Fold(Value),
@@ -74,6 +76,7 @@ impl CompileTo<Command> for Expr {
       Expr::UnifyApp(a, b) => {
         Command::UnifyApp(a.compile(ctx)?, b.compile(ctx)?)
       },
+      Expr::TraceQuery(c) => Command::TraceQuery(c.compile(ctx)?),
       Expr::PrintVal(v) => Command::PrintVal(v.compile(ctx)?),
       Expr::PrintStmt(s) => Command::PrintStmt(s.compile(ctx)?),
       Expr::Fold(v) => Command::Fold(v.compile(ctx)?),
@@ -194,7 +197,7 @@ impl CompileTo<a::Clause> for Clause {
   }
 }
 
-#[derive(Debug)] // TODO: handle PartialEq
+#[derive(PartialEq, Debug)]
 pub struct App(pub Atom, pub Tuple);
 
 impl CompileTo<a::App> for App {
@@ -204,10 +207,6 @@ impl CompileTo<a::App> for App {
       self.1.compile(ctx)?,
     ))
   }
-}
-
-impl PartialEq for App {
-  fn eq(&self, rhs: &Self) -> bool { unimplemented!() }
 }
 
 #[derive(PartialEq, Debug)]

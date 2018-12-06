@@ -10,6 +10,7 @@ mod ast;
 mod error;
 mod eval;
 mod read;
+mod tracer;
 
 lalrpop_mod!(pub parser);
 

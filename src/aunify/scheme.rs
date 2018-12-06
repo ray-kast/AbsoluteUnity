@@ -12,10 +12,12 @@ pub enum MaybeScheme<T> {
 
 impl<T> Scheme<T> {
   pub fn generalize(t: T, on: HashSet<Var>) -> Self { Scheme(on, t) }
+
+  pub fn val(&self) -> &T { &self.1 }
 }
 
 impl<T: Thing> Scheme<T> {
-  pub fn inst(self, src: &mut VarSource) -> Result<T> {
+  pub fn inst(self, src: &VarSource) -> Result<T> {
     let mut sub = Sub::top();
 
     for var in self.0 {
@@ -28,7 +30,7 @@ impl<T: Thing> Scheme<T> {
 }
 
 impl<T: Thing + Clone> Scheme<T> {
-  pub fn make_inst(&self, src: &mut VarSource) -> Result<T> {
+  pub fn make_inst(&self, src: &VarSource) -> Result<T> {
     let mut sub = Sub::top();
 
     for var in &self.0 {
@@ -74,7 +76,7 @@ impl<T: Thing> MaybeScheme<T> {
   }
 
   // TODO: return self if instantiation fails?
-  pub fn to_inst(&mut self, src: &mut VarSource) -> Result<&T> {
+  pub fn to_inst(&mut self, src: &VarSource) -> Result<&T> {
     use self::MaybeScheme::*;
 
     Ok(match self {
@@ -97,7 +99,7 @@ impl<T: Thing> MaybeScheme<T> {
     })
   }
 
-  pub fn into_inst(self, src: &mut VarSource) -> Result<T> {
+  pub fn into_inst(self, src: &VarSource) -> Result<T> {
     use self::MaybeScheme::*;
 
     match self {
@@ -108,7 +110,7 @@ impl<T: Thing> MaybeScheme<T> {
 }
 
 impl<T: Thing + Clone> MaybeScheme<T> {
-  pub fn as_inst(&self, src: &mut VarSource) -> Result<Cow<T>> {
+  pub fn as_inst(&self, src: &VarSource) -> Result<Cow<T>> {
     use self::MaybeScheme::*;
 
     Ok(match self {
@@ -122,7 +124,7 @@ impl<T: Thing + Unify> MaybeScheme<T> {
   pub fn unify_inst(
     &mut self,
     rhs: &mut Self,
-    src: &mut VarSource,
+    src: &VarSource,
   ) -> Result<Sub> {
     let a = self.to_inst(src)?;
     let b = rhs.to_inst(src)?;
@@ -133,7 +135,7 @@ impl<T: Thing + Unify> MaybeScheme<T> {
   pub fn inst_and_unify(
     self,
     rhs: Self,
-    src: &mut VarSource,
+    src: &VarSource,
   ) -> Result<(T, T, Sub)> {
     self.into_inst(src).and_then(|a| {
       rhs

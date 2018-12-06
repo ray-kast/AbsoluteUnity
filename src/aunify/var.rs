@@ -1,4 +1,5 @@
 use super::prelude::*;
+use std::cell::Cell;
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Var {
@@ -33,16 +34,18 @@ impl Display for Var {
 }
 
 pub struct VarSource {
-  curr: u32,
+  curr: Cell<u32>,
 }
 
 impl VarSource {
-  pub fn new() -> Self { Self { curr: 0 } }
+  pub fn new() -> Self { Self { curr: Cell::new(0) } }
 
-  pub fn acquire(&mut self) -> Var {
-    let ret = Var::Auto(self.curr);
+  pub fn acquire(&self) -> Var {
+    let curr = self.curr.get();
 
-    self.curr = self.curr + 1;
+    let ret = Var::Auto(curr);
+
+    self.curr.set(curr + 1);
 
     ret
   }

@@ -36,6 +36,7 @@ pub trait Thing {
   fn can_sub(&self, sub: &Sub) -> bool;
 }
 
+// TODO: add tracing for unification
 pub trait Unify {
   fn unify(&self, rhs: &Self) -> Result<Sub>;
 }

@@ -32,6 +32,8 @@ impl App {
 
     App(pred, args)
   }
+
+  pub fn pred(&self) -> &RcPred { &self.0 }
 }
 
 impl Thing for App {

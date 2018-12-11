@@ -51,23 +51,23 @@ impl Evaluator {
         NilTracer,
       ))),
       Command::UnifyVal(a, b) => EvalResult::UnifyVal(
-        a.inst_and_unify(b, &mut self.var_src)
+        a.inst_and_unify(b, &mut self.var_src, NilTracer)
           .and_then(|(a, b, sub)| {
             let a1 = a.clone();
             let b1 = b.clone();
-            let a2 = a.sub(&sub)?;
-            let b2 = b.sub(&sub)?;
+            let a2 = a.sub(&sub, NilTracer)?;
+            let b2 = b.sub(&sub, NilTracer)?;
 
             Ok((a1, b1, sub, a2, b2))
           }),
       ),
       Command::UnifyApp(a, b) => EvalResult::UnifyApp(
-        a.inst_and_unify(b, &mut self.var_src)
+        a.inst_and_unify(b, &mut self.var_src, NilTracer)
           .and_then(|(a, b, sub)| {
             let a1 = a.clone();
             let b1 = b.clone();
-            let a2 = a.sub(&sub)?;
-            let b2 = b.sub(&sub)?;
+            let a2 = a.sub(&sub, NilTracer)?;
+            let b2 = b.sub(&sub, NilTracer)?;
 
             Ok((a1, b1, sub, a2, b2))
           }),

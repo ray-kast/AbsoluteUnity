@@ -1,4 +1,4 @@
-use super::prelude::*;
+use super::{prelude::*, tracer::prelude::*};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Sub(HashMap<Var, Value>);
@@ -47,12 +47,20 @@ impl Thing for Sub {
     }
   }
 
-  fn sub(mut self, sub: &Sub) -> Result<Self> {
+  fn sub_impl<T: ThingTracer>(
+    mut self,
+    sub: &Sub,
+    tracer: T::SubHandle,
+  ) -> Result<Self> {
     use self::HashEntry::*;
+
+    let mut sub = sub.clone();
+
+    sub.0.retain(|v, _| !self.0.contains_key(v));
 
     for (var, is) in &mut self.0 {
       if !sub.0.contains_key(var) {
-        is.sub_self(sub)?;
+        is.sub_self(&sub, tracer.clone())?;
       }
     }
 
@@ -61,7 +69,7 @@ impl Thing for Sub {
         Vacant(v) => {
           v.insert(is.clone());
         },
-        Occupied(o) => o.into_mut().sub_self(sub)?,
+        Occupied(o) => o.into_mut().sub_self(&sub, tracer.clone())?,
       }
     }
 

@@ -1,26 +1,29 @@
 mod app {
   use super::super::{helpers::value::*, zip_unify};
-  use crate::{App, Pred, Tuple, Unify};
+  use crate::{App, NilTracer, Pred, Tuple, Unify};
 
   #[test]
   fn unify() {
     zip_unify::test_equal_len(|a, b| {
       let pred = Pred::new_rc("test".into(), a.len());
 
-      App::new(pred.clone(), Tuple(a)).unify(&App::new(pred, Tuple(b)))
+      App::new(pred.clone(), Tuple(a))
+        .unify(&App::new(pred, Tuple(b)), NilTracer)
     });
 
     zip_unify::test_noneq_len(|a, b| {
-      App::new(Pred::new_rc("test".into(), a.len()), Tuple(a))
-        .unify(&App::new(Pred::new_rc("test".into(), b.len()), Tuple(b)))
+      App::new(Pred::new_rc("test".into(), a.len()), Tuple(a)).unify(
+        &App::new(Pred::new_rc("test".into(), b.len()), Tuple(b)),
+        NilTracer,
+      )
     });
 
     assert!(
       App::new(Pred::new_rc("a".into(), 1), Tuple(vec![atomv("a")]))
-        .unify(&App::new(
-          Pred::new_rc("b".into(), 1),
-          Tuple(vec![atomv("a")])
-        ))
+        .unify(
+          &App::new(Pred::new_rc("b".into(), 1), Tuple(vec![atomv("a")])),
+          NilTracer
+        )
         .is_err()
     );
   }

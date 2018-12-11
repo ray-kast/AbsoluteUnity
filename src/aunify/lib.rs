@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate error_chain; // TODO: this should be able to be removed, somehow
 
+pub mod bind;
 pub mod clause;
 pub mod env;
 pub mod gen_iter;
@@ -19,6 +20,7 @@ pub mod value;
 pub mod var;
 
 pub use self::{
+  bind::{Bind, MaybeBind},
   clause::Clause,
   env::Env,
   list::List,
@@ -79,10 +81,10 @@ error_chain! {
       display("predicates {} and {} don't match", a, b)
     }
 
-    VarBothSides(var: Var) {
-      description("variable on both sides of unify")
-      display("unsolvable unify: {} is on both sides", var)
-    }
+    // VarBothSides(var: Var) {
+    //   description("variable on both sides of unify")
+    //   display("unsolvable unify: {} is on both sides", var)
+    // }
   }
 }
 

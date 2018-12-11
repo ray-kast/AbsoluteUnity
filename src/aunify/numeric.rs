@@ -1,4 +1,4 @@
-use super::prelude::*;
+use super::{prelude::*, tracer::prelude::*};
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Numeric {
@@ -132,7 +132,11 @@ impl Thing for Numeric {
     }
   }
 
-  fn sub(mut self, sub: &Sub) -> Result<Self> {
+  fn sub_impl<T: ThingTracer>(
+    mut self,
+    sub: &Sub,
+    tracer: T::SubHandle,
+  ) -> Result<Self> {
     use self::Numeric::*;
 
     self.fold(); // TODO: doing the fold only here seems highly problematic
@@ -144,8 +148,12 @@ impl Thing for Numeric {
         v => return Err(ErrorKind::SubBadType("Numeric", v).into()),
       },
       Int(i) => Int(i),
-      Unop(o, n) => Unop(o, Box::new(n.sub(sub)?)),
-      Binop(o, a, b) => Binop(o, Box::new(a.sub(sub)?), Box::new(b.sub(sub)?)),
+      Unop(o, n) => Unop(o, Box::new(n.sub(sub, tracer)?)),
+      Binop(o, a, b) => Binop(
+        o,
+        Box::new(a.sub(sub, tracer.clone())?),
+        Box::new(b.sub(sub, tracer)?),
+      ),
     })
   }
 
@@ -166,7 +174,11 @@ impl Thing for Numeric {
 }
 
 impl Unify for Numeric {
-  fn unify(&self, rhs: &Self) -> Result<Sub> {
+  fn unify_impl<T: UnifyTracer>(
+    &self,
+    rhs: &Self,
+    tracer: T::UnifyHandle,
+  ) -> Result<Sub> {
     use self::Numeric::*;
 
     match (self, rhs) {
@@ -178,27 +190,30 @@ impl Unify for Numeric {
         }
       },
       (Var(a), b) => {
-        if b.free_vars().contains(a) {
-          Err(ErrorKind::VarBothSides(a.clone()).into())
-        } else {
-          Sub::top().with(a.clone(), Value::Numeric(b.clone()))
-        }
+        // if b.free_vars().contains(a) {
+        //   Err(ErrorKind::VarBothSides(a.clone()).into())
+        // } else {
+        Sub::top().with(a.clone(), Value::Numeric(b.clone()))
+        // }
       },
       (a, Var(b)) => {
-        if a.free_vars().contains(b) {
-          Err(ErrorKind::VarBothSides(b.clone()).into())
-        } else {
-          Sub::top().with(b.clone(), Value::Numeric(a.clone()))
-        }
+        // if a.free_vars().contains(b) {
+        //   Err(ErrorKind::VarBothSides(b.clone()).into())
+        // } else {
+        Sub::top().with(b.clone(), Value::Numeric(a.clone()))
+        // }
       },
       (Int(a), Int(b)) if a == b => Ok(Sub::top()),
-      (Unop(o1, n1), Unop(o2, n2)) if o1 == o2 => n1.unify(n2),
+      (Unop(o1, n1), Unop(o2, n2)) if o1 == o2 => n1.unify(n2, tracer),
       (Binop(o1, a1, b1), Binop(o2, a2, b2)) if o1 == o2 => {
-        let asub = a1.unify(a2)?;
+        let asub = a1.unify(a2, tracer.clone())?;
 
-        let bsub = b1.clone().sub(&asub)?.unify(&b2.clone().sub(&asub)?)?;
+        let bsub = b1
+          .clone()
+          .sub(&asub, tracer.for_thing())?
+          .unify(&b2.clone().sub(&asub, tracer.for_thing())?, tracer.clone())?;
 
-        asub.sub(&bsub)
+        asub.sub(&bsub, tracer.for_thing())
       },
       _ => Err(ErrorKind::BadNumericUnify(self.clone(), rhs.clone()).into()),
     }

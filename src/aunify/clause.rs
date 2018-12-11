@@ -1,4 +1,4 @@
-use super::prelude::*;
+use super::{prelude::*, tracer::prelude::*};
 
 #[derive(Clone, Debug)]
 pub enum Clause {
@@ -73,16 +73,26 @@ impl Thing for Clause {
     }
   }
 
-  fn sub(self, sub: &Sub) -> Result<Self> {
+  fn sub_impl<T: ThingTracer>(
+    self,
+    sub: &Sub,
+    tracer: T::SubHandle,
+  ) -> Result<Self> {
     use self::Clause::*;
 
     Ok(match self {
       Top => Top,
       Bot => Bot,
-      App(a) => App(a.sub(sub)?),
-      Not(c) => Not(Box::new(c.sub(sub)?)),
-      And(a, b) => And(Box::new(a.sub(sub)?), Box::new(b.sub(sub)?)),
-      Or(a, b) => Or(Box::new(a.sub(sub)?), Box::new(b.sub(sub)?)),
+      App(a) => App(a.sub(sub, tracer)?),
+      Not(c) => Not(Box::new(c.sub(sub, tracer)?)),
+      And(a, b) => And(
+        Box::new(a.sub(sub, tracer.clone())?),
+        Box::new(b.sub(sub, tracer)?),
+      ),
+      Or(a, b) => Or(
+        Box::new(a.sub(sub, tracer.clone())?),
+        Box::new(b.sub(sub, tracer)?),
+      ),
     })
   }
 

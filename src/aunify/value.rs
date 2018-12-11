@@ -1,4 +1,4 @@
-use super::prelude::*;
+use super::{prelude::*, tracer::prelude::*};
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Value {
@@ -22,15 +22,19 @@ impl Thing for Value {
     }
   }
 
-  fn sub(self, sub: &Sub) -> Result<Self> {
+  fn sub_impl<T: ThingTracer>(
+    self,
+    sub: &Sub,
+    tracer: T::SubHandle,
+  ) -> Result<Self> {
     use self::Value::*;
 
     Ok(match self {
       Var(v) => sub.get(&v).map_or(Var(v), |l| l.clone()),
       Atom(a) => Atom(a),
-      Numeric(n) => Numeric(n.sub(sub)?),
-      Tuple(t) => Tuple(t.sub(sub)?),
-      List(l) => List(Box::new(l.sub(sub)?)),
+      Numeric(n) => Numeric(n.sub(sub, tracer)?),
+      Tuple(t) => Tuple(t.sub(sub, tracer)?),
+      List(l) => List(Box::new(l.sub(sub, tracer)?)),
     })
   }
 
@@ -48,7 +52,11 @@ impl Thing for Value {
 }
 
 impl Unify for Value {
-  fn unify(&self, rhs: &Value) -> Result<Sub> {
+  fn unify_impl<T: UnifyTracer>(
+    &self,
+    rhs: &Value,
+    tracer: T::UnifyHandle,
+  ) -> Result<Sub> {
     use self::Value::*;
 
     match (self, rhs) {
@@ -60,23 +68,23 @@ impl Unify for Value {
         }
       },
       (Var(a), b) => {
-        if b.free_vars().contains(a) {
-          Err(ErrorKind::VarBothSides(a.clone()).into())
-        } else {
-          Sub::top().with(a.clone(), b.clone())
-        }
+        // if b.free_vars().contains(a) {
+        //   Err(ErrorKind::VarBothSides(a.clone()).into())
+        // } else {
+        Sub::top().with(a.clone(), b.clone())
+        // }
       },
       (a, Var(b)) => {
-        if a.free_vars().contains(b) {
-          Err(ErrorKind::VarBothSides(b.clone()).into())
-        } else {
-          Sub::top().with(b.clone(), a.clone())
-        }
+        // if a.free_vars().contains(b) {
+        //   Err(ErrorKind::VarBothSides(b.clone()).into())
+        // } else {
+        Sub::top().with(b.clone(), a.clone())
+        // }
       },
       (Atom(a), Atom(b)) if a == b => Ok(Sub::top()),
-      (Numeric(a), Numeric(b)) => a.unify(b),
-      (Tuple(a), Tuple(b)) => a.unify(b),
-      (List(a), List(b)) => a.unify(b),
+      (Numeric(a), Numeric(b)) => a.unify(b, tracer),
+      (Tuple(a), Tuple(b)) => a.unify(b, tracer),
+      (List(a), List(b)) => a.unify(b, tracer),
       _ => Err(ErrorKind::BadValueUnify(self.clone(), rhs.clone()).into()),
     }
   }

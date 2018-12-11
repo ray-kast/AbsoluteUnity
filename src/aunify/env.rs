@@ -34,32 +34,33 @@ impl Env {
           continue;
         }
 
-        match stmt.as_inst(src) {
+        match stmt.as_inst(src, tracer.for_thing()) {
           Ok(stmt) => {
-            let unify_tracer = tracer.begin_unify(stmt.lhs(), &app);
-
-            match stmt.lhs().unify(&app).and_then(|sub| {
-              stmt.rhs().clone().sub(&sub).map(|rhs| (rhs, sub))
+            match stmt.lhs().unify(&app, tracer.for_unify()).and_then(|sub| {
+              stmt
+                .rhs()
+                .clone()
+                .sub(&sub, tracer.for_thing())
+                .map(|rhs| (rhs, sub))
             }) {
               Ok((rhs, sub)) => {
-                unify_tracer.ok(&rhs, &sub);
-
                 // Box the iterator to avoid type recursion
                 for sub2 in Box::new(self.solve_clause_impl(
                   rhs,
                   src,
-                  unify_tracer.clone(),
+                  tracer.clone(),
                 )) {
-                  if let Ok(ret) = sub.clone().sub(&sub2) {
+                  if let Ok(ret) = sub.clone().sub(&sub2, tracer.for_thing()) {
                     let ret = ret.relevant_to(&app);
 
                     if app.can_sub(&ret) {
+                      tracer.pre_yield(&ret);
                       yield ret;
                     }
                   }
                 }
               },
-              Err(e) => unify_tracer.err(e),
+              Err(_) => {},
             }
           },
           Err(_) => {},
@@ -89,31 +90,44 @@ impl Env {
       let tracer = tracer.begin_solve_clause(&clause);
 
       match clause {
-        Clause::Top => yield Sub::top(),
+        Clause::Top => {
+          let ret = Sub::top();
+          tracer.pre_yield(&ret);
+          yield ret;
+        },
         Clause::Bot => {},
         Clause::App(a) => {
-          for sol in self.solve_app_impl(a, src, tracer) {
+          for sol in self.solve_app_impl(a, src, tracer.clone()) {
+            tracer.pre_yield(&sol);
             yield sol;
           }
         },
         Clause::Not(c) => {
           // TODO: maybe have some kind of non-constructive constraint system?
 
-          match Box::new(self.solve_clause_impl(*c, src, tracer)).next() {
+          match Box::new(self.solve_clause_impl(*c, src, tracer.clone())).next()
+          {
             Some(_) => {},
-            None => yield Sub::top(),
+            None => {
+              let ret = Sub::top();
+              tracer.pre_yield(&ret);
+              yield ret;
+            },
           }
         },
         Clause::And(a, b) => {
           for sub in Box::new(self.solve_clause_impl(*a, src, tracer.clone())) {
             // TODO: this is gonna result in a lot of cloning...
-            match b.clone().sub(&sub) {
+            match b.clone().sub(&sub, tracer.for_thing()) {
               Ok(b) => {
                 for sub2 in
                   Box::new(self.solve_clause_impl(b, src, tracer.clone()))
                 {
-                  match sub.clone().sub(&sub2) {
-                    Ok(s) => yield s,
+                  match sub.clone().sub(&sub2, tracer.for_thing()) {
+                    Ok(s) => {
+                      tracer.pre_yield(&s);
+                      yield s;
+                    },
                     Err(_) => {},
                   }
                 }
@@ -124,10 +138,12 @@ impl Env {
         },
         Clause::Or(a, b) => {
           for sol in Box::new(self.solve_clause_impl(*a, src, tracer.clone())) {
+            tracer.pre_yield(&sol);
             yield sol;
           }
 
-          for sol in Box::new(self.solve_clause_impl(*b, src, tracer)) {
+          for sol in Box::new(self.solve_clause_impl(*b, src, tracer.clone())) {
+            tracer.pre_yield(&sol);
             yield sol;
           }
         },

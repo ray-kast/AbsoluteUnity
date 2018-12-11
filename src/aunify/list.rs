@@ -1,4 +1,4 @@
-use super::prelude::*;
+use super::{prelude::*, tracer::prelude::*};
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum List {
@@ -23,11 +23,15 @@ impl Thing for List {
     }
   }
 
-  fn sub(self, sub: &Sub) -> Result<Self> {
+  fn sub_impl<T: ThingTracer>(
+    self,
+    sub: &Sub,
+    tracer: T::SubHandle,
+  ) -> Result<Self> {
     use self::List::*;
 
     Ok(match self {
-      Cons(h, t) => Cons(h.sub(sub)?, t.sub(sub)?),
+      Cons(h, t) => Cons(h.sub(sub, tracer.clone())?, t.sub(sub, tracer)?),
       Nil => Nil,
     })
   }
@@ -43,15 +47,22 @@ impl Thing for List {
 }
 
 impl Unify for List {
-  fn unify(&self, rhs: &Self) -> Result<Sub> {
+  fn unify_impl<T: UnifyTracer>(
+    &self,
+    rhs: &Self,
+    tracer: T::UnifyHandle,
+  ) -> Result<Sub> {
     use self::List::*;
 
     match (self, rhs) {
       (Cons(h1, t1), Cons(h2, t2)) => {
-        let hsub = h1.unify(&h2)?;
-        let tsub = t1.clone().sub(&hsub)?.unify(&t2.clone().sub(&hsub)?)?;
+        let hsub = h1.unify(&h2, tracer.clone())?;
+        let tsub = t1
+          .clone()
+          .sub(&hsub, tracer.for_thing())?
+          .unify(&t2.clone().sub(&hsub, tracer.for_thing())?, tracer.clone())?;
 
-        hsub.sub(&tsub)
+        hsub.sub(&tsub, tracer.for_thing())
       },
       (Nil, Nil) => Ok(Sub::top()),
       _ => Err(ErrorKind::BadListUnify(self.clone(), rhs.clone()).into()),
@@ -82,16 +93,20 @@ impl Thing for Tail {
     }
   }
 
-  fn sub(self, sub: &Sub) -> Result<Self> {
+  fn sub_impl<T: ThingTracer>(
+    self,
+    sub: &Sub,
+    tracer: T::SubHandle,
+  ) -> Result<Self> {
     use self::Tail::*;
 
     Ok(match self {
       Open(v) => match sub.get(&v).map_or(Value::Var(v), |v| v.clone()) {
         Value::Var(v) => Open(v),
-        Value::List(l) => Close(Box::new(l.sub(sub)?)),
+        Value::List(l) => Close(Box::new(l.sub(sub, tracer.clone())?)),
         v => return Err(ErrorKind::SubBadType("Tail", v).into()),
       },
-      Close(l) => Close(Box::new(l.sub(sub)?)),
+      Close(l) => Close(Box::new(l.sub(sub, tracer)?)),
     })
   }
 
@@ -110,7 +125,11 @@ impl Thing for Tail {
 }
 
 impl Unify for Tail {
-  fn unify(&self, rhs: &Self) -> Result<Sub> {
+  fn unify_impl<T: UnifyTracer>(
+    &self,
+    rhs: &Self,
+    tracer: T::UnifyHandle,
+  ) -> Result<Sub> {
     use self::Tail::*;
 
     match (self, rhs) {
@@ -122,20 +141,20 @@ impl Unify for Tail {
         }
       },
       (Open(a), Close(b)) => {
-        if b.free_vars().contains(a) {
-          Err(ErrorKind::VarBothSides(a.clone()).into())
-        } else {
-          Sub::top().with(a.clone(), Value::List(b.clone()))
-        }
+        // if b.free_vars().contains(a) {
+        //   Err(ErrorKind::VarBothSides(a.clone()).into())
+        // } else {
+        Sub::top().with(a.clone(), Value::List(b.clone()))
+        // }
       },
       (Close(a), Open(b)) => {
-        if a.free_vars().contains(b) {
-          Err(ErrorKind::VarBothSides(b.clone()).into())
-        } else {
-          Sub::top().with(b.clone(), Value::List(a.clone()))
-        }
+        // if a.free_vars().contains(b) {
+        //   Err(ErrorKind::VarBothSides(b.clone()).into())
+        // } else {
+        Sub::top().with(b.clone(), Value::List(a.clone()))
+        // }
       },
-      (Close(a), Close(b)) => a.unify(&b),
+      (Close(a), Close(b)) => a.unify(&b, tracer),
     }
   }
 }
